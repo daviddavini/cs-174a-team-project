@@ -28,6 +28,8 @@ export class Assignment3 extends Scene {
             ring: new Material(new Ring_Shader()),
             // TODO:  Fill in as many additional material objects as needed in this key/value table.
             //        (Requirement 4)
+            sun: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: 0, specularity: 0, color: hex_color("#ffffff")}),
         }
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
@@ -58,16 +60,23 @@ export class Assignment3 extends Scene {
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
 
-        // TODO: Create Planets (Requirement 1)
-        // this.shapes.[XXX].draw([XXX]) // <--example
+        const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
         // TODO: Lighting (Requirement 2)
-        const light_position = vec4(0, 5, 5, 1);
+        const sun_time_offset = t % 8;
+        const sun_radius = (sun_time_offset < 4) ? 1 + 2*(sun_time_offset/4) : 3 - 2*((sun_time_offset-4)/4);
+        const sun_radius_normalized = (sun_radius - 1) / 2;
+        const sun_color = color(1,sun_radius_normalized,sun_radius_normalized,1)
+        const sun_position = vec4(0,0,0,1);
+        const light_position = sun_position.copy();
         // The parameters of the Light are: position, color, size
-        program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
+        program_state.lights = [new Light(light_position, sun_color, 10 ** sun_radius)];
+
+        // TODO: Create Planets (Requirement 1)
+        const sun_transform = Mat4.scale(sun_radius, sun_radius, sun_radius);
+        this.shapes.sphere.draw(context, program_state, sun_transform, this.materials.sun.override({color: sun_color}));
 
         // TODO:  Fill in matrix operations and drawing code to draw the solar system scene (Requirements 3 and 4)
-        const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
         const yellow = hex_color("#fac91a");
         let model_transform = Mat4.identity();
 
