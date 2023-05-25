@@ -101,8 +101,29 @@ export class Rocket extends Scene {
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
     }
 
+    date_select(recipient = this, parent = this.control_panel) {
+        const date = parent.appendChild(document.createElement("INPUT"));
+        date.setAttribute("id", "date");
+        date.setAttribute("type", "date");
+        date.setAttribute("value", "2023-05-25");
+
+        const new_date = () => {
+            this.date = date.value;
+        }
+
+        date.addEventListener("change", new_date);
+    }
+
+
+    // const yearSelect = document.querySelector('#year');
+    // const monthSelect = document.querySelector('#month');
+    // const daySelect = document.querySelector('#day');
+
     make_control_panel() {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
+        this.date = "2023-05-25";
+        this.date_select();
+        this.new_line();
         this.key_triggered_button("View solar system", ["Control", "0"], () => this.attached = () => null);
         this.new_line();
         this.key_triggered_button("Attach to planet 1", ["Control", "1"], () => this.attached = () => this.planet_1);
