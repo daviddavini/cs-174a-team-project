@@ -1,7 +1,7 @@
 import {defs, tiny} from './examples/common.js';
 
 const {
-    Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene,
+    Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture
 } = tiny;
 
 export class Rocket extends Scene {
@@ -35,6 +35,12 @@ export class Rocket extends Scene {
             // f4: new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(4),
         };
 
+        // Shader options common to all planets
+        const planet_options = {
+            color: color(.5, .5, .5, 1),
+            ambient: 0.5, diffusivity: 0.5, specularity: 0.5,
+        };
+
         // *** Materials
         this.materials = {
             test: new Material(new defs.Phong_Shader(),
@@ -44,26 +50,37 @@ export class Rocket extends Scene {
             ring: new Material(new Ring_Shader()),
             // TODO:  Fill in as many additional material objects as needed in this key/value table.
             //        (Requirement 4)
-            sun: new Material(new defs.Phong_Shader(),
-                {ambient: 1, diffusivity: 0, specularity: 0, color: hex_color("#ffffff")}),
-            mercury: new Material(new defs.Phong_Shader(),
-                {ambient: 1, diffusivity: 1, specularity: 0, color: hex_color("#808080")}),
-            venus: new Material(new defs.Phong_Shader(),
-                {ambient: 1, diffusivity: 1, specularity: 0, color: hex_color("#808080")}),
-            earth: new Material(new defs.Phong_Shader(),
-                {ambient: 1, diffusivity: 1, specularity: 0, color: hex_color("#808080")}),
-            mars: new Material(new defs.Phong_Shader(),
-                {ambient: 1, diffusivity: 1, specularity: 0, color: hex_color("#808080")}),
-            jupiter: new Material(new defs.Phong_Shader(),
-                {ambient: 1, diffusivity: 1, specularity: 0, color: hex_color("#808080")}),
-            saturn: new Material(new defs.Phong_Shader(),
-                {ambient: 1, diffusivity: 1, specularity: 0, color: hex_color("#808080")}),
-            uranus: new Material(new defs.Phong_Shader(),
-                {ambient: 1, diffusivity: 1, specularity: 0, color: hex_color("#808080")}),
-            neptune: new Material(new defs.Phong_Shader(),
-                {ambient: 1, diffusivity: 1, specularity: 0, color: hex_color("#808080")}),
-            pluto: new Material(new defs.Phong_Shader(),
-                {ambient: 1, diffusivity: 1, specularity: 0, color: hex_color("#808080")}),
+            sun: new Material(new defs.Fake_Bump_Map(1), {
+                color: color(.5, .5, .5, 1), ambient: 0.5, diffusivity: 1, specularity: 0, 
+                texture: new Texture("our-assets/sun.jpeg")
+            }),
+            mercury: new Material(new defs.Fake_Bump_Map(1), {
+                ...planet_options, texture: new Texture("our-assets/mercury.jpeg")
+            }),
+            venus: new Material(new defs.Fake_Bump_Map(1), {
+                ...planet_options, texture: new Texture("our-assets/venus.jpeg")
+            }),
+            earth: new Material(new defs.Fake_Bump_Map(1), {
+                ...planet_options, texture: new Texture("our-assets/earth.jpeg")
+            }),
+            mars: new Material(new defs.Fake_Bump_Map(1), {
+                ...planet_options, texture: new Texture("our-assets/mars.jpg")
+            }),
+            jupiter: new Material(new defs.Fake_Bump_Map(1), {
+                ...planet_options, texture: new Texture("our-assets/jupiter.jpeg")
+            }),
+            saturn: new Material(new defs.Fake_Bump_Map(1), {
+                ...planet_options, texture: new Texture("our-assets/saturn.jpeg")
+            }),
+            uranus: new Material(new defs.Fake_Bump_Map(1), {
+                ...planet_options, texture: new Texture("our-assets/uranus.jpg")
+            }),
+            neptune: new Material(new defs.Fake_Bump_Map(1), {
+                ...planet_options, texture: new Texture("our-assets/neptune.jpg")
+            }),
+            pluto: new Material(new defs.Fake_Bump_Map(1), {
+                ...planet_options, texture: new Texture("our-assets/pluto.png")
+            }),
             // planet_1: new Material(new defs.Phong_Shader(),
             //     {diffusivity: 1, specularity: 0, color: hex_color("#808080")}),
             // planet_2_phong: new Material(new defs.Phong_Shader(),
@@ -126,7 +143,7 @@ export class Rocket extends Scene {
 
         // TODO: Create Planets (Requirement 1)
         const sun_transform = Mat4.scale(sun_radius, sun_radius, sun_radius);
-        this.shapes.sphere.draw(context, program_state, sun_transform, this.materials.sun.override({color: yellow}));
+        this.shapes.sphere.draw(context, program_state, sun_transform, this.materials.sun);
 
         // TODO:  Fill in matrix operations and drawing code to draw the solar system scene (Requirements 3 and 4)
 
