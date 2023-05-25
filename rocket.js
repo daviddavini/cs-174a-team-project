@@ -51,8 +51,7 @@ export class Rocket extends Scene {
             // TODO:  Fill in as many additional material objects as needed in this key/value table.
             //        (Requirement 4)
             sun: new Material(new defs.Fake_Bump_Map(1), {
-                color: color(.5, .5, .5, 1), ambient: 0.5, diffusivity: 1, specularity: 0, 
-                texture: new Texture("our-assets/sun.jpeg")
+               ...planet_options, texture: new Texture("our-assets/sun_resized.jpeg")
             }),
             mercury: new Material(new defs.Fake_Bump_Map(1), {
                 ...planet_options, texture: new Texture("our-assets/mercury.jpeg")
@@ -70,13 +69,13 @@ export class Rocket extends Scene {
                 ...planet_options, texture: new Texture("our-assets/jupiter.jpeg")
             }),
             saturn: new Material(new defs.Fake_Bump_Map(1), {
-                ...planet_options, texture: new Texture("our-assets/saturn.jpeg")
+                ...planet_options, texture: new Texture("our-assets/saturn_resized.jpeg")
             }),
             uranus: new Material(new defs.Fake_Bump_Map(1), {
                 ...planet_options, texture: new Texture("our-assets/uranus.jpg")
             }),
             neptune: new Material(new defs.Fake_Bump_Map(1), {
-                ...planet_options, texture: new Texture("our-assets/neptune.jpg")
+                ...planet_options, texture: new Texture("our-assets/neptune_resized.jpg")
             }),
             pluto: new Material(new defs.Fake_Bump_Map(1), {
                 ...planet_options, texture: new Texture("our-assets/pluto.png")
@@ -138,8 +137,7 @@ export class Rocket extends Scene {
         // const light_position = sun_position.copy();
         // The parameters of the Light are: position, color, size
         const sun_radius = 3;
-        const yellow = hex_color("#fac91a");
-        program_state.lights = [new Light(vec(0,0,0,0), yellow, 10 ** sun_radius)];
+        program_state.lights = [];
 
         // TODO: Create Planets (Requirement 1)
         const sun_transform = Mat4.scale(sun_radius, sun_radius, sun_radius);
