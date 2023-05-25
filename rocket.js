@@ -141,19 +141,41 @@ export class Rocket extends Scene {
 
         // TODO: Create Planets (Requirement 1)
         const sun_transform = Mat4.scale(sun_radius, sun_radius, sun_radius);
-        this.shapes.sphere.draw(context, program_state, sun_transform, this.materials.sun);
+        // this.shapes.sphere.draw(context, program_state, sun_transform, this.materials.sun);
 
         // TODO:  Fill in matrix operations and drawing code to draw the solar system scene (Requirements 3 and 4)
 
-        let mercury_radius = 5;
-        let venus_radius = 8;
-        let earth_radius = 11;
-        let mars_radius = 14;
-        let jupiter_radius = 17;
-        let saturn_radius = 20;
-        let uranus_radius = 23;
-        let neptune_radius = 26;
-        let pluto_radius = 29;
+        // (in kms)
+        const kms_to_aus = 6.68459e-9;
+        const scale_factor = 3_000_000;
+        let mercury_radius_kms = 2.4397;
+        let venus_radius_kms = 6.0518;
+        let earth_radius_kms = 6.371;
+        let mars_radius_kms = 3.3895;
+        let jupiter_radius_kms = 69.911;
+        let saturn_radius_kms = 58.232;
+        let uranus_radius_kms = 25.362;
+        let neptune_radius_kms = 24.622;
+        let pluto_radius_kms = 1.1883;
+        let mercury_radius = mercury_radius_kms * kms_to_aus * scale_factor;
+        let venus_radius = venus_radius_kms * kms_to_aus * scale_factor;
+        let earth_radius = earth_radius_kms * kms_to_aus * scale_factor;
+        let mars_radius = mars_radius_kms * kms_to_aus * scale_factor;
+        let jupiter_radius = jupiter_radius_kms * kms_to_aus * scale_factor;
+        let saturn_radius = saturn_radius_kms * kms_to_aus * scale_factor;
+        let uranus_radius = uranus_radius_kms * kms_to_aus * scale_factor;
+        let neptune_radius = neptune_radius_kms * kms_to_aus * scale_factor;
+        let pluto_radius = pluto_radius_kms * kms_to_aus * scale_factor;
+        
+        let pluto_rotation_days = 6.3872;
+        let neptune_rotation_days = 0.6713;
+        let uranus_rotation_days = 0.7183;
+        let saturn_rotation_days = 0.444;
+        let jupiter_rotation_days = 0.411;
+        let mars_rotation_days = 1.025957;
+        let earth_rotation_days = 1;
+        let venus_rotation_days = 1.1175;
+        let mercury_rotation_days = 1.408;
 
         let mercury_rate = 1;
         let venus_rate = 0.75;
@@ -173,7 +195,7 @@ export class Rocket extends Scene {
         let saturn_num = 5;
         let uranus_num = 6;
         let neptune_num = 7;
-        let TGen = 0.015*t;
+        let TGen = 0.0015*t;
 
 
 		
@@ -187,28 +209,28 @@ export class Rocket extends Scene {
         let neptune_coords = plotPlanet_Planets(TGen, 7);
 
 		
-        let mercury_transform = Mat4.translation(merc_coords[0], 0, merc_coords[1]);
+        let mercury_transform = Mat4.translation(merc_coords[0], 0, merc_coords[1]).times(Mat4.scale(mercury_radius, mercury_radius, mercury_radius));
         this.mercury = mercury_transform;
 		console.log();
-        let venus_transform = Mat4.translation(venus_coords[0], 0, venus_coords[1]);
+        let venus_transform = Mat4.translation(venus_coords[0], 0, venus_coords[1]).times(Mat4.scale(venus_radius, venus_radius, venus_radius));
         this.venus = venus_transform;
 
-        let earth_transform = Mat4.translation(earth_coords[0], 0, earth_coords[1]);
+        let earth_transform = Mat4.translation(earth_coords[0], 0, earth_coords[1]).times(Mat4.scale(earth_radius, earth_radius, earth_radius));
         this.earth = earth_transform;
 
-        let mars_transform = Mat4.translation(mars_coords[0], 0, mars_coords[1]);
+        let mars_transform = Mat4.translation(mars_coords[0], 0, mars_coords[1]).times(Mat4.scale(mars_radius, mars_radius, mars_radius));
         this.mars = mars_transform;
 
-        let jupiter_transform = Mat4.translation(jupiter_coords[0], 0, jupiter_coords[1]);
+        let jupiter_transform = Mat4.translation(jupiter_coords[0], 0, jupiter_coords[1]).times(Mat4.scale(jupiter_radius, jupiter_radius, jupiter_radius));
         this.jupiter = jupiter_transform;
 
-        let saturn_transform = Mat4.translation(saturn_coords[0], 0,saturn_coords[1]);
+        let saturn_transform = Mat4.translation(saturn_coords[0], 0,saturn_coords[1]).times(Mat4.scale(saturn_radius, saturn_radius, saturn_radius));
         this.saturn = saturn_transform;
 
-        let uranus_transform = Mat4.translation(uranus_coords[0], 0, uranus_coords[1]);
+        let uranus_transform = Mat4.translation(uranus_coords[0], 0, uranus_coords[1]).times(Mat4.scale(uranus_radius, uranus_radius, uranus_radius));
         this.uranus = uranus_transform;
 
-        let neptune_transform = Mat4.translation(neptune_coords[0], 0, neptune_coords[1]);
+        let neptune_transform = Mat4.translation(neptune_coords[0], 0, neptune_coords[1]).times(Mat4.scale(neptune_radius, neptune_radius, neptune_radius));
         this.neptune = neptune_transform;
 
 
