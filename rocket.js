@@ -150,32 +150,52 @@ export class Rocket extends Scene {
         let neptune_rate = 0.25;
         let pluto_rate = 0.25;
 
-        let mercury_transform = Mat4.translation(mercury_radius * Math.cos(mercury_rate * t), 0, mercury_radius * Math.sin(-mercury_rate * t));
-        this.mercury = mercury_transform;
+        let mercury_num = 0;
+        let venus_num = 1;
+        let earth_num = 2;
+        let mars_num = 3;
+        let jupiter_num = 4;
+        let saturn_num = 5;
+        let uranus_num = 6;
+        let neptune_num = 7;
+        let TGen = 0.015*t;
 
-        let venus_transform = Mat4.translation(venus_radius * Math.cos(venus_rate * t), 0, venus_radius * Math.sin(-venus_rate * t));
+
+		
+        let merc_coords = plotPlanet_Planets(TGen, 0);
+        let venus_coords = plotPlanet_Planets(TGen, 1);
+        let earth_coords = plotPlanet_Planets(TGen, 2);
+        let mars_coords = plotPlanet_Planets(TGen, 3);
+        let jupiter_coords = plotPlanet_Planets(TGen, 4);
+        let saturn_coords = plotPlanet_Planets(TGen, 5);
+        let uranus_coords = plotPlanet_Planets(TGen, 6);
+        let neptune_coords = plotPlanet_Planets(TGen, 7);
+
+		
+        let mercury_transform = Mat4.translation(merc_coords[0], 0, merc_coords[1]);
+        this.mercury = mercury_transform;
+		console.log();
+        let venus_transform = Mat4.translation(venus_coords[0], 0, venus_coords[1]);
         this.venus = venus_transform;
 
-        let earth_transform = Mat4.translation(earth_radius * Math.cos(earth_rate * t), 0, earth_radius * Math.sin(-earth_rate * t));
+        let earth_transform = Mat4.translation(earth_coords[0], 0, earth_coords[1]);
         this.earth = earth_transform;
 
-        let mars_transform = Mat4.translation(mars_radius * Math.cos(mars_rate * t), 0, mars_radius * Math.sin(-mars_rate * t));
+        let mars_transform = Mat4.translation(mars_coords[0], 0, mars_coords[1]);
         this.mars = mars_transform;
 
-        let jupiter_transform = Mat4.translation(jupiter_radius * Math.cos(jupiter_rate * t), 0, jupiter_radius * Math.sin(-jupiter_rate * t));
+        let jupiter_transform = Mat4.translation(jupiter_coords[0], 0, jupiter_coords[1]);
         this.jupiter = jupiter_transform;
 
-        let saturn_transform = Mat4.translation(saturn_radius * Math.cos(saturn_rate * t), 0, saturn_radius * Math.sin(-saturn_rate * t));
+        let saturn_transform = Mat4.translation(saturn_coords[0], 0,saturn_coords[1]);
         this.saturn = saturn_transform;
 
-        let uranus_transform = Mat4.translation(uranus_radius * Math.cos(uranus_rate * t), 0, uranus_radius * Math.sin(-uranus_rate * t));
+        let uranus_transform = Mat4.translation(uranus_coords[0], 0, uranus_coords[1]);
         this.uranus = uranus_transform;
 
-        let neptune_transform = Mat4.translation(neptune_radius * Math.cos(neptune_rate * t), 0, neptune_radius * Math.sin(-neptune_rate * t));
+        let neptune_transform = Mat4.translation(neptune_coords[0], 0, neptune_coords[1]);
         this.neptune = neptune_transform;
 
-        let pluto_transform = Mat4.translation(pluto_radius * Math.cos(pluto_rate * t), 0, pluto_radius * Math.sin(-pluto_rate * t));
-        this.pluto = pluto_transform;
 
         this.shapes.mercury.draw(context, program_state, mercury_transform, this.materials.mercury);
         this.shapes.venus.draw(context, program_state, venus_transform, this.materials.venus);
@@ -185,7 +205,6 @@ export class Rocket extends Scene {
         this.shapes.saturn.draw(context, program_state, saturn_transform, this.materials.saturn);
         this.shapes.uranus.draw(context, program_state, uranus_transform, this.materials.uranus);
         this.shapes.neptune.draw(context, program_state, neptune_transform, this.materials.neptune);
-        this.shapes.pluto.draw(context, program_state, pluto_transform, this.materials.pluto);
 
 
         // old code
@@ -443,3 +462,217 @@ class Ring_Shader extends Shader {
     }
 }
 
+var Planets = {
+	fps:20, //Set desired framerate
+	now:null,
+	then:Date.now(),
+	interval:null,
+	delta:null,
+	//TPS
+	nowTPS:null,
+	thenTPS:Date.now(),
+	avgTPSCount:0,
+	TPSCount:0,
+	deltaTPS:0,
+	//FPS
+	nowFPS:null,
+	thenFPS:Date.now(),
+	avgFPSCount:0,
+	FPSCount:0,
+	deltaFPS:0,
+
+	julianCenturyInJulianDays:36525,
+	julianEpochJ2000:2451545.0,
+	julianDate:null,
+	current:null,
+	newDate:null,
+	DAY:null,
+	MONTH:null,
+	YEAR:null,
+	
+//ELEMENTS @ J2000: a, e, i, mean longitude (L), longitude of perihelion, longitude of ascending node
+planetElements: [
+	//MERCURY (0)
+	[0.38709927,0.20563593,7.00497902,252.25032350,77.45779628,48.33076593],
+	//VENUS (1)
+	[0.72333566,0.00677672,3.39467605,181.97909950,131.60246718,76.67984255],
+	//EARTH (2)
+	[1.00000261,0.01671123,-0.00001531,100.46457166,102.93768193,0.0],
+	//MARS (3)
+	[1.52371034,0.09339410,1.84969142,-4.55343205,-23.94362959,49.55953891],
+	//JUPITER (4)
+	[5.20288700,0.04838624,1.30439695,34.39644051,14.72847983,100.47390909],
+	//SATURN (5)
+	[9.53667594,0.05386179,2.48599187,49.95424423,92.59887831,113.66242448],
+	//URANUS (6)
+	[19.18916464,0.04725744,0.77263783,313.23810451,170.95427630,74.01692503],
+	//NEPTUNE (7)
+	[30.06992276,0.00859048,1.77004347,-55.12002969,44.96476227,131.78422574]
+],
+	
+//RATES: a, e, i, mean longitude (L), longitude of perihelion, longitude of ascending node
+planetRates: [
+	//MERCURY (0)
+	[0.00000037,0.00001906,-0.00594749,149472.67411175,0.16047689,-0.1253408],
+	//VENUS (1)
+	[0.00000390,-0.00004107,-0.00078890,58517.81538729,0.00268329,-0.27769418],
+	//EARTH (2)
+	[0.00000562,-0.00004392,-0.01294668,35999.37244981,0.32327364,0.0],
+	//MARS (3)
+	[0.00001847,0.00007882,-0.00813131,19140.30268499,0.44441088,-0.29257343],
+	//JUPITER (4)
+	[-0.00011607,-0.00013253,-0.00183714,3034.74612775,0.21252668,0.20469106],
+	//SATURN (5)
+	[-0.00125060,-0.00050991,0.00193609,1222.49362201,-0.41897216,-0.28867794],
+	//URANUS (6)
+	[-0.00196176,-0.00004397,-0.00242939,428.48202785,0.40805281,0.04240589],
+	//NEPTUNE (7)
+	[0.00026291,0.00005105,0.00035372,218.45945325,-0.32241464,-0.00508664]
+],
+	
+	orbitalElements:null,
+	
+	xMercury:null,
+	yMercury:null,
+	xVenus:null,
+	yVenus:null,
+	xEarth:null,
+	yEarth:null,
+	xMars:null,
+	yMars:null,
+	xJupiter:null,
+	yJupiter:null,
+	xSaturn:null,
+	ySaturn:null,
+	xUranus:null,
+	yUranus:null,		
+	xNeptune:null,
+	yNeptune:null,			
+	
+	scale:50,
+	
+	//Divide AU multiplier by this number to fit it into  "orrery" style solar system (compressed scale)
+	jupiterScaleDivider:2.5, 
+	saturnScaleDivider:3.5,
+	uranusScaleDivider:6.2,
+	neptuneScaleDivider:8.7
+}
+
+function getJulianDate_Planets(Year,Month,Day){
+	var inputDate = new Date(Year,Month,Math.floor(Day));
+	var switchDate = new Date("1582","10","15");
+
+	var isGregorianDate = inputDate >= switchDate;
+	if(Year<0){
+		Year++;
+	}
+	if(Month==1||Month==2){
+		Year = Year - 1;
+		Month = Month + 12;
+	}
+	var B = 2-A+Math.floor(A/4);
+	if(!isGregorianDate){B=0;}
+					
+	return ((Math.floor(365.25*Year)) + (Math.floor(30.6001*(Month+1))) + Day + 1720994.5 + B);			
+}
+
+function plotPlanet_Planets(TGen,planetNumber){
+	//--------------------------------------------------------------------------------------------
+	//1.
+	//ORBIT SIZE
+	//AU (CONSTANT = DOESN'T CHANGE)
+	var aGen = Planets.planetElements[planetNumber][0] + (Planets.planetRates[planetNumber][0] * TGen);
+	//2.
+	//ORBIT SHAPE
+	//ECCENTRICITY (CONSTANT = DOESN'T CHANGE)
+	var eGen = Planets.planetElements[planetNumber][1] + (Planets.planetRates[planetNumber][1] * TGen);
+	//--------------------------------------------------------------------------------------------
+	//3.
+	//ORBIT ORIENTATION
+	//ORBITAL INCLINATION (CONSTANT = DOESN'T CHANGE)
+	var iGen = Planets.planetElements[planetNumber][2] + (Planets.planetRates[planetNumber][2] * TGen);
+	var iGen = iGen%360;
+	//4.
+	//ORBIT ORIENTATION
+	//LONG OF ASCENDING NODE (CONSTANT = DOESN'T CHANGE)
+	var WGen = Planets.planetElements[planetNumber][5] + (Planets.planetRates[planetNumber][5] * TGen);
+	var WGen = WGen%360;
+	//5.
+	//ORBIT ORIENTATION
+	//LONGITUDE OF THE PERIHELION
+	var wGen = Planets.planetElements[planetNumber][4] + (Planets.planetRates[planetNumber][4] * TGen);
+	wGen = wGen%360;
+	if(wGen<0){wGen = 360+wGen;}	
+	//--------------------------------------------------------------------------------------------
+	//6.
+	//ORBIT POSITION
+	//MEAN LONGITUDE (DYNAMIC = CHANGES OVER TIME)
+	var LGen = Planets.planetElements[planetNumber][3] + (Planets.planetRates[planetNumber][3] * TGen);
+	LGen = LGen%360;
+	if(LGen<0){LGen = 360+LGen;}	
+	
+	
+	//MEAN ANOMALY --> Use this to determine Perihelion (0 degrees = Perihelion of planet)
+	var MGen = LGen - (wGen);
+	if(MGen<0){MGen=360+MGen;}
+
+	//ECCENTRIC ANOMALY
+	var EGen = EccAnom_Planets(eGen,MGen,6);
+	
+	//ARGUMENT OF TRUE ANOMALY
+	var trueAnomalyArgGen = (Math.sqrt((1+eGen) / (1-eGen)))*(Math.tan(toRadians_Planets(EGen)/2));
+
+	//TRUE ANOMALY (DYNAMIC = CHANGES OVER TIME)
+	var K = Math.PI/180.0; //Radian converter variable
+	if(trueAnomalyArgGen<0){ 
+		var nGen = 2 * (Math.atan(trueAnomalyArgGen)/K+180); //ATAN = ARCTAN = INVERSE TAN
+	}
+	else{
+		var nGen = 2 * (Math.atan(trueAnomalyArgGen)/K)
+	}
+	//--------------------------------------------------------------------------------------------
+	
+	//CALCULATE RADIUS VECTOR
+	var rGen = aGen * (1 - (eGen * (Math.cos(toRadians_Planets(EGen)))));
+	
+	//TAKEN FROM: http://www.stargazing.net/kepler/ellipse.html
+	//CREDIT: Keith Burnett
+	//Used to determine Heliocentric Ecliptic Coordinates
+	var xGen = rGen *(Math.cos(toRadians_Planets(WGen)) * Math.cos(toRadians_Planets(nGen+wGen-WGen)) - Math.sin(toRadians_Planets(WGen)) * Math.sin(toRadians_Planets(nGen+wGen-WGen)) * Math.cos(toRadians_Planets(iGen)));
+	var yGen = rGen *(Math.sin(toRadians_Planets(WGen)) * Math.cos(toRadians_Planets(nGen+wGen-WGen)) + Math.cos(toRadians_Planets(WGen)) * Math.sin(toRadians_Planets(nGen+wGen-WGen)) * Math.cos(toRadians_Planets(iGen)));
+	var zGen = rGen *(Math.sin(toRadians_Planets(nGen+wGen-WGen))*Math.sin(toRadians_Planets(iGen)));
+
+	return [xGen, yGen];
+}
+
+function EccAnom_Planets(ec,m,dp) {
+	var pi=Math.PI, K=pi/180.0;
+	var maxIter=30, i=0;
+	var delta=Math.pow(10,-dp);
+	var E, F;
+
+	m=m/360.0;
+	m=2.0*pi*(m-Math.floor(m));
+
+	if (ec<0.8) E=m; else E=pi;
+
+	F = E - ec*Math.sin(m) - m;
+
+	while ((Math.abs(F)>delta) && (i<maxIter)) {
+		E = E - F/(1.0-ec*Math.cos(E));
+		F = E - ec*Math.sin(E) - m;
+		i = i + 1;
+	}
+
+	E=E/K;
+
+	return Math.round(E*Math.pow(10,dp))/Math.pow(10,dp);
+}
+
+function toRadians_Planets(deg){
+	return deg * (Math.PI / 180);
+}
+
+function round_Planets(value, decimals) {
+	return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
+}
