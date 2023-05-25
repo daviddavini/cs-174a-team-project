@@ -19,10 +19,18 @@ export class Rocket extends Scene {
             //        (Requirement 1)
             // s1: new defs.Subdivision_Sphere(1),
             // s2: new defs.Subdivision_Sphere(2),
-            s3: new defs.Subdivision_Sphere(3),
-            s4: new defs.Subdivision_Sphere(4),
-            f1: new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(1),
-            f2: new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(2),
+            mercury: new defs.Subdivision_Sphere(4),
+            venus: new defs.Subdivision_Sphere(4),
+            earth: new defs.Subdivision_Sphere(4),
+            mars: new defs.Subdivision_Sphere(4),
+            jupiter: new defs.Subdivision_Sphere(4),
+            saturn: new defs.Subdivision_Sphere(4),
+            uranus: new defs.Subdivision_Sphere(4),
+            neptune: new defs.Subdivision_Sphere(4),
+            pluto: new defs.Subdivision_Sphere(4),
+            // s4: new defs.Subdivision_Sphere(4),
+            // f1: new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(1),
+            // f2: new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(2),
             // f3: new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(3),
             // f4: new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(4),
         };
@@ -38,22 +46,40 @@ export class Rocket extends Scene {
             //        (Requirement 4)
             sun: new Material(new defs.Phong_Shader(),
                 {ambient: 1, diffusivity: 0, specularity: 0, color: hex_color("#ffffff")}),
-            planet_1: new Material(new defs.Phong_Shader(),
-                {diffusivity: 1, specularity: 0, color: hex_color("#808080")}),
-            planet_2_phong: new Material(new defs.Phong_Shader(),
-                {diffusivity: 0.25, specularity: 1, color: hex_color("#80ffff")}),
-            planet_2_gouraud: new Material(new Gouraud_Shader(),
-                {diffusivity: 0.25, specularity: 1, color: hex_color("#80ffff")}),
-            planet_3: new Material(new defs.Phong_Shader(),
-                {diffusivity: 1, specularity: 1, color: hex_color("#b08040")}),
-            planet_3_ring_simple: new Material(new defs.Phong_Shader(),
-                {ambient: 1, diffusivity: 0, specularity: 0, color: hex_color("#b08040")}),
-            planet_3_ring_fancy: new Material(new Ring_Shader(),
-                {diffusivity: 1, specularity: 1, color: hex_color("#b08040")}),
-            planet_4: new Material(new defs.Phong_Shader(),
-                {diffusivity: 1, specularity: 1, smoothness: 400, color: hex_color("#ADD8E6")}),
-            planet_4_moon: new Material(new defs.Phong_Shader(),
-                {diffusivity: 1, specularity: 1, color: hex_color("#ff00ff")}),
+            mercury: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: 1, specularity: 0, color: hex_color("#808080")}),
+            venus: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: 1, specularity: 0, color: hex_color("#808080")}),
+            earth: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: 1, specularity: 0, color: hex_color("#808080")}),
+            mars: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: 1, specularity: 0, color: hex_color("#808080")}),
+            jupiter: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: 1, specularity: 0, color: hex_color("#808080")}),
+            saturn: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: 1, specularity: 0, color: hex_color("#808080")}),
+            uranus: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: 1, specularity: 0, color: hex_color("#808080")}),
+            neptune: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: 1, specularity: 0, color: hex_color("#808080")}),
+            pluto: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: 1, specularity: 0, color: hex_color("#808080")}),
+            // planet_1: new Material(new defs.Phong_Shader(),
+            //     {diffusivity: 1, specularity: 0, color: hex_color("#808080")}),
+            // planet_2_phong: new Material(new defs.Phong_Shader(),
+            //     {diffusivity: 0.25, specularity: 1, color: hex_color("#80ffff")}),
+            // planet_2_gouraud: new Material(new Gouraud_Shader(),
+            //     {diffusivity: 0.25, specularity: 1, color: hex_color("#80ffff")}),
+            // planet_3: new Material(new defs.Phong_Shader(),
+            //     {diffusivity: 1, specularity: 1, color: hex_color("#b08040")}),
+            // planet_3_ring_simple: new Material(new defs.Phong_Shader(),
+            //     {ambient: 1, diffusivity: 0, specularity: 0, color: hex_color("#b08040")}),
+            // planet_3_ring_fancy: new Material(new Ring_Shader(),
+            //     {diffusivity: 1, specularity: 1, color: hex_color("#b08040")}),
+            // planet_4: new Material(new defs.Phong_Shader(),
+            //     {diffusivity: 1, specularity: 1, smoothness: 400, color: hex_color("#ADD8E6")}),
+            // planet_4_moon: new Material(new defs.Phong_Shader(),
+            //     {diffusivity: 1, specularity: 1, color: hex_color("#ff00ff")}),
         }
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
@@ -87,71 +113,124 @@ export class Rocket extends Scene {
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
         // TODO: Lighting (Requirement 2)
-        const sun_time_offset = t % 8;
-        const sun_radius = (sun_time_offset < 4) ? 1 + 2*(sun_time_offset/4) : 3 - 2*((sun_time_offset-4)/4);
-        const sun_radius_normalized = (sun_radius - 1) / 2;
-        const sun_color = color(1,sun_radius_normalized,sun_radius_normalized,1)
-        const sun_position = vec4(0,0,0,1);
-        const light_position = sun_position.copy();
+        // const sun_time_offset = t % 8;
+        // const sun_radius = (sun_time_offset < 4) ? 1 + 2*(sun_time_offset/4) : 3 - 2*((sun_time_offset-4)/4);
+        // const sun_radius_normalized = (sun_radius - 1) / 2;
+        // const sun_color = color(1,sun_radius_normalized,sun_radius_normalized,1)
+        // const sun_position = vec4(0,0,0,1);
+        // const light_position = sun_position.copy();
         // The parameters of the Light are: position, color, size
-        program_state.lights = [new Light(light_position, sun_color, 10 ** sun_radius)];
+        const sun_radius = 3;
+        const yellow = hex_color("#fac91a");
+        program_state.lights = [new Light(vec(0,0,0,0), yellow, 10 ** sun_radius)];
 
         // TODO: Create Planets (Requirement 1)
         const sun_transform = Mat4.scale(sun_radius, sun_radius, sun_radius);
-        this.shapes.sphere.draw(context, program_state, sun_transform, this.materials.sun.override({color: sun_color}));
+        this.shapes.sphere.draw(context, program_state, sun_transform, this.materials.sun.override({color: yellow}));
 
         // TODO:  Fill in matrix operations and drawing code to draw the solar system scene (Requirements 3 and 4)
-        const yellow = hex_color("#fac91a");
-        let p1_radius = 5;
-        let p2_radius = 8;
-        let p3_radius = 11;
-        let p4_radius = 14;
-        let p1_rate = 1;
-        let p2_rate = 0.75;
-        let p3_rate = 0.5;
-        let p4_rate = 0.25;
+
+        let mercury_radius = 5;
+        let venus_radius = 8;
+        let earth_radius = 11;
+        let mars_radius = 14;
+        let jupiter_radius = 17;
+        let saturn_radius = 20;
+        let uranus_radius = 23;
+        let neptune_radius = 26;
+        let pluto_radius = 29;
+
+        let mercury_rate = 1;
+        let venus_rate = 0.75;
+        let earth_rate = 0.5;
+        let mars_rate = 0.25;
+        let jupiter_rate = 0.25;
+        let saturn_rate = 0.25;
+        let uranus_rate = 0.25;
+        let neptune_rate = 0.25;
+        let pluto_rate = 0.25;
+
+        let mercury_transform = Mat4.translation(mercury_radius * Math.cos(mercury_rate * t), 0, mercury_radius * Math.sin(-mercury_rate * t));
+        this.mercury = mercury_transform;
+
+        let venus_transform = Mat4.translation(venus_radius * Math.cos(venus_rate * t), 0, venus_radius * Math.sin(-venus_rate * t));
+        this.venus = venus_transform;
+
+        let earth_transform = Mat4.translation(earth_radius * Math.cos(earth_rate * t), 0, earth_radius * Math.sin(-earth_rate * t));
+        this.earth = earth_transform;
+
+        let mars_transform = Mat4.translation(mars_radius * Math.cos(mars_rate * t), 0, mars_radius * Math.sin(-mars_rate * t));
+        this.mars = mars_transform;
+
+        let jupiter_transform = Mat4.translation(jupiter_radius * Math.cos(jupiter_rate * t), 0, jupiter_radius * Math.sin(-jupiter_rate * t));
+        this.jupiter = jupiter_transform;
+
+        let saturn_transform = Mat4.translation(saturn_radius * Math.cos(saturn_rate * t), 0, saturn_radius * Math.sin(-saturn_rate * t));
+        this.saturn = saturn_transform;
+
+        let uranus_transform = Mat4.translation(uranus_radius * Math.cos(uranus_rate * t), 0, uranus_radius * Math.sin(-uranus_rate * t));
+        this.uranus = uranus_transform;
+
+        let neptune_transform = Mat4.translation(neptune_radius * Math.cos(neptune_rate * t), 0, neptune_radius * Math.sin(-neptune_rate * t));
+        this.neptune = neptune_transform;
+
+        let pluto_transform = Mat4.translation(pluto_radius * Math.cos(pluto_rate * t), 0, pluto_radius * Math.sin(-pluto_rate * t));
+        this.pluto = pluto_transform;
+
+        this.shapes.mercury.draw(context, program_state, mercury_transform, this.materials.mercury);
+        this.shapes.venus.draw(context, program_state, venus_transform, this.materials.venus);
+        this.shapes.earth.draw(context, program_state, earth_transform, this.materials.earth);
+        this.shapes.mars.draw(context, program_state, mars_transform, this.materials.mars);
+        this.shapes.jupiter.draw(context, program_state, jupiter_transform, this.materials.jupiter);
+        this.shapes.saturn.draw(context, program_state, saturn_transform, this.materials.saturn);
+        this.shapes.uranus.draw(context, program_state, uranus_transform, this.materials.uranus);
+        this.shapes.neptune.draw(context, program_state, neptune_transform, this.materials.neptune);
+        this.shapes.pluto.draw(context, program_state, pluto_transform, this.materials.pluto);
+
+
+        // old code
         
-        let p1_transform = Mat4.translation(p1_radius * Math.cos(p1_rate * t), 0, p1_radius * Math.sin(-p1_rate * t));
-        this.planet_1 = p1_transform;
-        let p2_transform = Mat4.translation(p2_radius * Math.cos(p2_rate * t), 0, p2_radius * Math.sin(-p2_rate * t));
-        this.planet_2 = p2_transform;
-
-        let p3_rotation_rate = 3;
-        let p3_transform = Mat4.translation(p3_radius * Math.cos(p3_rate * t), 0, p3_radius * Math.sin(-p3_rate * t)).times(Mat4.rotation(p3_rotation_rate * t, 0, 1, 0));
-        this.planet_3 = p3_transform;
-        let p3_ring_transform = p3_transform.times(Mat4.scale(3,3,0.2));
-
-        let p4_transform = Mat4.translation(p4_radius * Math.cos(p4_rate * t), 0, p4_radius * Math.sin(-p4_rate * t));
-        this.planet_4 = p4_transform;
-        let p4_moon_radius = 2;
-        let p4_moon_rate = 2;
-        let p4_moon_transform = p4_transform.times(Mat4.translation(p4_moon_radius * Math.cos(p4_moon_rate * t), 0, p4_moon_radius * Math.sin(p4_moon_rate * t)));
-        this.moon = p4_moon_transform;
-
-        this.shapes.f2.draw(context, program_state, p1_transform, this.materials.planet_1);
-        
-        if (t % 2 < 1) {
-            // odd second
-            this.shapes.s3.draw(context, program_state, p2_transform, this.materials.planet_2_gouraud);
-        } else {
-            // even second
-            this.shapes.s3.draw(context, program_state, p2_transform, this.materials.planet_2_phong);
-        }
-        
-        this.shapes.s4.draw(context, program_state, p3_transform, this.materials.planet_3);
-        this.shapes.torus.draw(context, program_state, p3_ring_transform, this.materials.planet_3_ring_fancy);
-
-        this.shapes.s4.draw(context, program_state, p4_transform, this.materials.planet_4);
-        this.shapes.f1.draw(context, program_state, p4_moon_transform, this.materials.planet_4_moon);
-
-        if (this.attached && this.attached() !== null) {
-            var desired = Mat4.inverse(this.attached().times(Mat4.translation(0, 0, 5)));
-        } else {
-            var desired = this.initial_camera_location;
-        }
-        const blending_factor = 0.1;
-        var desired = desired.map((x,i) => Vector.from(program_state.camera_inverse[i]).mix(x, blending_factor));
-        program_state.set_camera(desired);
+        // let p1_transform = Mat4.translation(p1_radius * Math.cos(p1_rate * t), 0, p1_radius * Math.sin(-p1_rate * t));
+        // this.planet_1 = p1_transform;
+        // let p2_transform = Mat4.translation(p2_radius * Math.cos(p2_rate * t), 0, p2_radius * Math.sin(-p2_rate * t));
+        // this.planet_2 = p2_transform;
+        //
+        // let p3_rotation_rate = 3;
+        // let p3_transform = Mat4.translation(p3_radius * Math.cos(p3_rate * t), 0, p3_radius * Math.sin(-p3_rate * t)).times(Mat4.rotation(p3_rotation_rate * t, 0, 1, 0));
+        // this.planet_3 = p3_transform;
+        // let p3_ring_transform = p3_transform.times(Mat4.scale(3,3,0.2));
+        //
+        // let p4_transform = Mat4.translation(p4_radius * Math.cos(p4_rate * t), 0, p4_radius * Math.sin(-p4_rate * t));
+        // this.planet_4 = p4_transform;
+        // let p4_moon_radius = 2;
+        // let p4_moon_rate = 2;
+        // let p4_moon_transform = p4_transform.times(Mat4.translation(p4_moon_radius * Math.cos(p4_moon_rate * t), 0, p4_moon_radius * Math.sin(p4_moon_rate * t)));
+        // this.moon = p4_moon_transform;
+        //
+        // this.shapes.f2.draw(context, program_state, p1_transform, this.materials.planet_1);
+        //
+        // if (t % 2 < 1) {
+        //     // odd second
+        //     this.shapes.s3.draw(context, program_state, p2_transform, this.materials.planet_2_gouraud);
+        // } else {
+        //     // even second
+        //     this.shapes.s3.draw(context, program_state, p2_transform, this.materials.planet_2_phong);
+        // }
+        //
+        // this.shapes.s4.draw(context, program_state, p3_transform, this.materials.planet_3);
+        // this.shapes.torus.draw(context, program_state, p3_ring_transform, this.materials.planet_3_ring_fancy);
+        //
+        // this.shapes.s4.draw(context, program_state, p4_transform, this.materials.planet_4);
+        // this.shapes.f1.draw(context, program_state, p4_moon_transform, this.materials.planet_4_moon);
+        //
+        // if (this.attached && this.attached() !== null) {
+        //     var desired = Mat4.inverse(this.attached().times(Mat4.translation(0, 0, 5)));
+        // } else {
+        //     var desired = this.initial_camera_location;
+        // }
+        // const blending_factor = 0.1;
+        // var desired = desired.map((x,i) => Vector.from(program_state.camera_inverse[i]).mix(x, blending_factor));
+        // program_state.set_camera(desired);
     }
 }
 
