@@ -122,17 +122,19 @@ export class Rocket extends Scene {
     make_control_panel() {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
         this.date = "2023-05-25";
+        this.paused = false;
         this.date_select();
         this.new_line();
-        this.key_triggered_button("View solar system", ["Control", "0"], () => this.attached = () => null);
-        this.new_line();
-        this.key_triggered_button("Attach to planet 1", ["Control", "1"], () => this.attached = () => this.planet_1);
-        this.key_triggered_button("Attach to planet 2", ["Control", "2"], () => this.attached = () => this.planet_2);
-        this.new_line();
-        this.key_triggered_button("Attach to planet 3", ["Control", "3"], () => this.attached = () => this.planet_3);
-        this.key_triggered_button("Attach to planet 4", ["Control", "4"], () => this.attached = () => this.planet_4);
-        this.new_line();
-        this.key_triggered_button("Attach to moon", ["Control", "m"], () => this.attached = () => this.moon);
+        this.key_triggered_button("Pause", ["Control", "0"], () => this.paused = () => !(this.paused));
+        // this.key_triggered_button("View solar system", ["Control", "0"], () => this.attached = () => null);
+        // this.new_line();
+        // this.key_triggered_button("Attach to planet 1", ["Control", "1"], () => this.attached = () => this.planet_1);
+        // this.key_triggered_button("Attach to planet 2", ["Control", "2"], () => this.attached = () => this.planet_2);
+        // this.new_line();
+        // this.key_triggered_button("Attach to planet 3", ["Control", "3"], () => this.attached = () => this.planet_3);
+        // this.key_triggered_button("Attach to planet 4", ["Control", "4"], () => this.attached = () => this.planet_4);
+        // this.new_line();
+        // this.key_triggered_button("Attach to moon", ["Control", "m"], () => this.attached = () => this.moon);
     }
 
     display(context, program_state) {
@@ -216,7 +218,11 @@ export class Rocket extends Scene {
         let saturn_num = 5;
         let uranus_num = 6;
         let neptune_num = 7;
-        let TGen = 0.0015*t;
+        // let TGen = 0.0015*t;
+
+        let current_date = new Date(this.date);
+        let julianDate = getJulianDate_Planets(current_date.getFullYear(), current_date.getMonth(), current_date.getDay());
+        let TGen = this.paused ? (julianDate-2451545.0)/36525 : 0.0015*t;
 
 
 		
@@ -617,21 +623,28 @@ planetRates: [
 }
 
 function getJulianDate_Planets(Year,Month,Day){
-	var inputDate = new Date(Year,Month,Math.floor(Day));
-	var switchDate = new Date("1582","10","15");
+    var inputDate = new Date(Year,Month,Math.floor(Day));
+    var switchDate = new Date("1582","10","15");
 
-	var isGregorianDate = inputDate >= switchDate;
-	if(Year<0){
-		Year++;
-	}
-	if(Month==1||Month==2){
-		Year = Year - 1;
-		Month = Month + 12;
-	}
-	var B = 2-A+Math.floor(A/4);
-	if(!isGregorianDate){B=0;}
-					
-	return ((Math.floor(365.25*Year)) + (Math.floor(30.6001*(Month+1))) + Day + 1720994.5 + B);			
+    var isGregorianDate = inputDate >= switchDate;
+    //Adjust if B.C.
+    if(Year<0){
+        Year++;
+    }
+    //Adjust if JAN or FEB
+    if(Month==1||Month==2){
+        Year = Year - 1;
+        Month = Month + 12;
+    }
+
+    //Calculate A & B; ONLY if date is equal or after 1582-Oct-15
+    var A = Math.floor(Year/100); //A
+    var B = 2-A+Math.floor(A/4); //B
+
+    //Ignore B if date is before 1582-Oct-15
+    if(!isGregorianDate){B=0;}
+
+    return ((Math.floor(365.25*Year)) + (Math.floor(30.6001*(Month+1))) + Day + 1720994.5 + B);
 }
 
 function plotPlanet_Planets(TGen,planetNumber){
