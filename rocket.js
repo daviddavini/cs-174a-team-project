@@ -98,7 +98,7 @@ export class Rocket extends Scene {
             //     {diffusivity: 1, specularity: 1, color: hex_color("#ff00ff")}),
         }
 
-        this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
+        this.initial_camera_location = Mat4.look_at(vec3(0, 10, 10), vec3(0, 0, 0), vec3(0, 1, 0));
     }
 
     date_select(recipient = this, parent = this.control_panel) {
@@ -157,18 +157,15 @@ export class Rocket extends Scene {
         // const sun_position = vec4(0,0,0,1);
         // const light_position = sun_position.copy();
         // The parameters of the Light are: position, color, size
-        const sun_radius = 3;
         program_state.lights = [];
-
-        // TODO: Create Planets (Requirement 1)
-        const sun_transform = Mat4.scale(sun_radius, sun_radius, sun_radius);
-        // this.shapes.sphere.draw(context, program_state, sun_transform, this.materials.sun);
 
         // TODO:  Fill in matrix operations and drawing code to draw the solar system scene (Requirements 3 and 4)
 
         // (in kms)
         const kms_to_aus = 6.68459e-9;
         const scale_factor = 3_000_000;
+        const sun_scale_factor = 10;
+        let sun_radius_kms = 695_700;
         let mercury_radius_kms = 2.4397;
         let venus_radius_kms = 6.0518;
         let earth_radius_kms = 6.371;
@@ -178,6 +175,7 @@ export class Rocket extends Scene {
         let uranus_radius_kms = 25.362;
         let neptune_radius_kms = 24.622;
         let pluto_radius_kms = 1.1883;
+        let sun_radius = sun_radius_kms * kms_to_aus * sun_scale_factor;
         let mercury_radius = mercury_radius_kms * kms_to_aus * scale_factor;
         let venus_radius = venus_radius_kms * kms_to_aus * scale_factor;
         let earth_radius = earth_radius_kms * kms_to_aus * scale_factor;
@@ -229,6 +227,11 @@ export class Rocket extends Scene {
         let uranus_coords = plotPlanet_Planets(TGen, 6);
         let neptune_coords = plotPlanet_Planets(TGen, 7);
 
+
+        // TODO: Create Planets (Requirement 1)
+        const sun_transform = Mat4.scale(sun_radius, sun_radius, sun_radius);
+        this.shapes.sphere.draw(context, program_state, sun_transform, this.materials.sun);
+        
 		
         let mercury_transform = Mat4.translation(merc_coords[0], 0, merc_coords[1]).times(Mat4.scale(mercury_radius, mercury_radius, mercury_radius));
         this.mercury = mercury_transform;
