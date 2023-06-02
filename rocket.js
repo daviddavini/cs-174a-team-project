@@ -1,4 +1,5 @@
 import {defs, tiny} from './examples/common.js';
+import { Shape_From_File } from './examples/obj-file-demo.js';
 
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture
@@ -25,6 +26,7 @@ export class Rocket extends Scene {
             pluto: new defs.Subdivision_Sphere(planet_subdivs),
             uranusring: new defs.Torus(15,15),
             background: new defs.Subdivision_Sphere(6),
+            rocket: new Shape_From_File("our-assets/rocketship2.obj"),
         };
 
         // Shader options common to all planets
@@ -69,6 +71,9 @@ export class Rocket extends Scene {
                 {...planet_options, texture: new Texture("our-assets/uranus-rings.png")}),
             background: new Material(new defs.Fake_Bump_Map(1), {
                 ambient: 1.0, texture: new Texture("our-assets/starmap_2020_8k.jpeg")
+            }),
+            rocket: new Material(new defs.Phong_Shader(),
+                {ambient: .4, diffusivity: .6, specularity: 1, shininess: 1, color: hex_color("#00FF00")
             })
         }
 
@@ -176,6 +181,10 @@ export class Rocket extends Scene {
         const bg_radius = 300
         const bg_transformation = Mat4.scale(bg_radius, bg_radius, bg_radius).times(Mat4.rotation(0.03*t, 0, 1, 0));
         this.shapes.background.draw(context, program_state, bg_transformation, this.materials.background);
+
+        const rocket_scale = 0.25;
+        const rocket_transform = this.earth.times(Mat4.translation(10,5,0).times(Mat4.scale(rocket_scale,rocket_scale,rocket_scale)));
+        this.shapes.rocket.draw(context, program_state, rocket_transform, this.materials.rocket);
     }
 }
 
