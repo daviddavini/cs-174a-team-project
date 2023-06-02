@@ -28,6 +28,7 @@ export class Rocket extends Scene {
             uranus: new defs.Subdivision_Sphere(4),
             neptune: new defs.Subdivision_Sphere(4),
             pluto: new defs.Subdivision_Sphere(4),
+            background: new defs.Subdivision_Sphere(6),
             // s4: new defs.Subdivision_Sphere(4),
             // f1: new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(1),
             // f2: new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(2),
@@ -80,6 +81,9 @@ export class Rocket extends Scene {
             pluto: new Material(new defs.Fake_Bump_Map(1), {
                 ...planet_options, texture: new Texture("our-assets/pluto.png")
             }),
+            background: new Material(new defs.Fake_Bump_Map(1), {
+                ambient: 1.0, texture: new Texture("our-assets/starmap_2020_8k.jpeg")
+            })
             // planet_1: new Material(new defs.Phong_Shader(),
             //     {diffusivity: 1, specularity: 0, color: hex_color("#808080")}),
             // planet_2_phong: new Material(new defs.Phong_Shader(),
@@ -280,6 +284,11 @@ export class Rocket extends Scene {
         this.shapes.saturn.draw(context, program_state, saturn_transform, this.materials.saturn);
         this.shapes.uranus.draw(context, program_state, uranus_transform, this.materials.uranus);
         this.shapes.neptune.draw(context, program_state, neptune_transform, this.materials.neptune);
+
+        // Draw the starry background 
+        const bg_radius = 300
+        const bg_transformation = Mat4.scale(bg_radius, bg_radius, bg_radius).times(Mat4.rotation(0.03*t, 0, 1, 0));
+        this.shapes.background.draw(context, program_state, bg_transformation, this.materials.background);
 
 
         // old code
