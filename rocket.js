@@ -9,18 +9,20 @@ export class Rocket extends Scene {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
 
+        const planet_subdivs = 6;
+
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
-            sun: new defs.Subdivision_Sphere(4),
-            mercury: new defs.Subdivision_Sphere(4),
-            venus: new defs.Subdivision_Sphere(4),
-            earth: new defs.Subdivision_Sphere(4),
-            mars: new defs.Subdivision_Sphere(4),
-            jupiter: new defs.Subdivision_Sphere(4),
-            saturn: new defs.Subdivision_Sphere(4),
-            uranus: new defs.Subdivision_Sphere(4),
-            neptune: new defs.Subdivision_Sphere(4),
-            pluto: new defs.Subdivision_Sphere(4),
+            sun: new defs.Subdivision_Sphere(planet_subdivs),
+            mercury: new defs.Subdivision_Sphere(planet_subdivs),
+            venus: new defs.Subdivision_Sphere(planet_subdivs),
+            earth: new defs.Subdivision_Sphere(planet_subdivs),
+            mars: new defs.Subdivision_Sphere(planet_subdivs),
+            jupiter: new defs.Subdivision_Sphere(planet_subdivs),
+            saturn: new defs.Subdivision_Sphere(planet_subdivs),
+            uranus: new defs.Subdivision_Sphere(planet_subdivs),
+            neptune: new defs.Subdivision_Sphere(planet_subdivs),
+            pluto: new defs.Subdivision_Sphere(planet_subdivs),
             uranusring: new defs.Torus(15,15),
             background: new defs.Subdivision_Sphere(6),
         };
