@@ -25,6 +25,7 @@ export class Rocket extends Scene {
             neptune: new defs.Subdivision_Sphere(planet_subdivs),
             pluto: new defs.Subdivision_Sphere(planet_subdivs),
             uranusring: new defs.Torus(15,15),
+            saturnring: new defs.Torus(15,15),
             background: new defs.Subdivision_Sphere(6),
             rocket: new Shape_From_File("our-assets/rocketship2.obj"),
         };
@@ -34,6 +35,9 @@ export class Rocket extends Scene {
             color: color(.5, .5, .5, 1),
             ambient: 0.5, diffusivity: 0.5, specularity: 0.5,
         };
+        // Set initial rocket location to initial sun location
+        this.rocket_matrix = Mat4.identity().times(Mat4.scale(2,2,2)).times(Mat4.translation(0,0,-3));
+        this.to_rocket = false;
 
         // *** Materials
         this.materials = {
@@ -67,8 +71,12 @@ export class Rocket extends Scene {
             pluto: new Material(new defs.Fake_Bump_Map(1), {
                 ...planet_options, texture: new Texture("our-assets/pluto.png")
             }),
-            uranusring: new Material(new defs.Fake_Bump_Map(1),
-                {...planet_options, texture: new Texture("our-assets/uranus-rings.png")}),
+
+            uranusring: new Material(new Ring_Shader(),
+                {...planet_options, color: hex_color('#ADD8E6')}),
+            saturnring: new Material(new Ring_Shader(),
+                {...planet_options}),
+
             background: new Material(new defs.Fake_Bump_Map(1), {
                 ambient: 1.0, texture: new Texture("our-assets/starmap_2020_8k.jpeg")
             }),
@@ -80,6 +88,21 @@ export class Rocket extends Scene {
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 10), vec3(0, 0, 0), vec3(0, 1, 0));
     }
 
+    move_left() {
+        this.rocket_matrix = this.rocket_matrix.times(Mat4.translation(-0.2,0,0));
+    }
+
+    move_right() {
+        this.rocket_matrix = this.rocket_matrix.times(Mat4.translation(0.2,0,0));
+    }
+
+    move_up() {
+        this.rocket_matrix = this.rocket_matrix.times(Mat4.translation(0,1,0));
+    }
+
+    move_down() {
+        this.rocket_matrix = this.rocket_matrix.times(Mat4.translation(0,-1,0));
+    }
     date_select(recipient = this, parent = this.control_panel) {
         const date_widget = parent.appendChild(document.createElement("INPUT"));
         date_widget.setAttribute("id", "date");
@@ -97,6 +120,14 @@ export class Rocket extends Scene {
     }
 
 
+    set_camera_state(val){
+        if(val == false){
+            this.attached = () => this.initial_camera_location;
+        }
+        else{
+            this.attached = () => this.rocket_cam;
+        }
+    }
     // const yearSelect = document.querySelector('#year');
     // const monthSelect = document.querySelector('#month');
     // const daySelect = document.querySelector('#day');
@@ -108,6 +139,12 @@ export class Rocket extends Scene {
         this.date_select();
         this.new_line();
         this.key_triggered_button("Pause/Play", ["Control", "0"], () => this.pause());
+        this.key_triggered_button("Camera to Rocket", ["t"], () => this.set_camera_state(true));
+        this.key_triggered_button("View Solar System", ["y"], () => this.set_camera_state(false));
+        this.key_triggered_button("Move Left", ["j"], () => this.move_left());
+        this.key_triggered_button("Move Up", ["i"], () => this.move_up());
+        this.key_triggered_button("Move Down", ["k"], () => this.move_down());
+        this.key_triggered_button("Move Right", ["l"], () => this.move_right());
         // this.key_triggered_button("View solar system", ["Control", "0"], () => this.attached = () => null);
         // this.new_line();
         // this.key_triggered_button("Attach to planet 1", ["Control", "1"], () => this.attached = () => this.planet_1);
@@ -153,7 +190,6 @@ export class Rocket extends Scene {
         let TGen = this.paused ? widget_TGen : continuous_TGen;
         this.lastTGen = TGen;
 
-        // TODO: Create Planets (Requirement 1)
         const sun_transform = Mat4.scale(sun_radius, sun_radius, sun_radius);
         this.shapes.sun.draw(context, program_state, sun_transform, this.materials.sun);
 
@@ -174,17 +210,36 @@ export class Rocket extends Scene {
             this.shapes[planet].draw(context, program_state, planet_transform, this.materials[planet]);
         }
 		
-        let uranus_ring_transform = this.earth.times(Mat4.scale(3,3,0.01));
+        let uranus_ring_transform = this.uranus.times(Mat4.scale(3,3,0.1));
         this.shapes.uranusring.draw(context, program_state, uranus_ring_transform, this.materials.uranusring);
+        let saturn_ring_transform = this.saturn.times(Mat4.scale(3,3,0.1));
+        this.shapes.saturnring.draw(context, program_state, saturn_ring_transform, this.materials.saturnring);
 
         // Draw the starry background 
         const bg_radius = 300
         const bg_transformation = Mat4.scale(bg_radius, bg_radius, bg_radius).times(Mat4.rotation(0.03*t, 0, 1, 0));
         this.shapes.background.draw(context, program_state, bg_transformation, this.materials.background);
 
+
+        // Add camera and rocket controls.
         const rocket_scale = 0.25;
-        const rocket_transform = this.earth.times(Mat4.translation(10,5,0).times(Mat4.scale(rocket_scale,rocket_scale,rocket_scale)));
-        this.shapes.rocket.draw(context, program_state, rocket_transform, this.materials.rocket);
+        if(this.attached == undefined){ //reset rocket to rotate around earth if player not controlling
+            var rocket_transform = this.earth.times(Mat4.translation(10,5,0).times(Mat4.scale(rocket_scale,rocket_scale,rocket_scale)));
+            rocket_transform = rocket_transform.times(Mat4.rotation(2,0,1,0));
+            this.shapes.rocket.draw(context, program_state, rocket_transform, this.materials.rocket);
+        }
+        else{ // go back to the rocket_matrix to start moving the rocket
+            var rocket_transform = this.rocket_matrix.times(Mat4.scale(rocket_scale,rocket_scale,rocket_scale));
+            this.shapes.rocket.draw(context, program_state, rocket_transform, this.materials.rocket);
+        }
+
+        this.rocket_cam = Mat4.inverse(rocket_transform.times(Mat4.translation(1,-1.5,20)));
+        //this.rocket_cam = this.rocket_cam.times(Mat4.rotation(45,1,0,0));
+
+        if(this.attached != undefined){
+            program_state.camera_inverse = this.attached().map((x,i) => Vector.from(program_state.camera_inverse[i]).mix(x, 0.1));
+
+        }
     }
 }
 
@@ -410,3 +465,47 @@ function round_Planets(value, decimals) {
 	return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
 }
 
+class Ring_Shader extends Shader {
+    update_GPU(context, gpu_addresses, graphics_state, model_transform, material) {
+        // update_GPU():  Defining how to synchronize our JavaScript's variables to the GPU's:
+        const [P, C, M] = [graphics_state.projection_transform, graphics_state.camera_inverse, model_transform],
+            PCM = P.times(C).times(M);
+        context.uniformMatrix4fv(gpu_addresses.model_transform, false, Matrix.flatten_2D_to_1D(model_transform.transposed()));
+        context.uniformMatrix4fv(gpu_addresses.projection_camera_model_transform, false,
+            Matrix.flatten_2D_to_1D(PCM.transposed()));
+    }
+
+    shared_glsl_code() {
+        // ********* SHARED CODE, INCLUDED IN BOTH SHADERS *********
+        return `
+        precision mediump float;
+        varying vec4 point_position;
+        varying vec4 center;
+        `;
+    }
+
+    vertex_glsl_code() {
+        // ********* VERTEX SHADER *********
+        // TODO:  Complete the main function of the vertex shader (Extra Credit Part II).
+        return this.shared_glsl_code() + `
+        attribute vec3 position;
+        uniform mat4 model_transform;
+        uniform mat4 projection_camera_model_transform;
+        
+        void main(){
+          center = model_transform * vec4(0.0, 0.0, 0.0, 1.0);
+          point_position = model_transform * vec4(position, 1.0);
+          gl_Position = projection_camera_model_transform * vec4(position, 1.0);  
+        }`;
+    }
+
+    fragment_glsl_code() {
+        // ********* FRAGMENT SHADER *********
+        // TODO:  Complete the main function of the fragment shader (Extra Credit Part II).
+        return this.shared_glsl_code() + `
+        void main(){
+            float scalar = 0.4* sin( 3.0 * distance(point_position.xyz, center.xyz));
+            gl_FragColor = scalar * vec4(1.0, 1.0, 0.01, 1.0);
+        }`;
+    }
+}
