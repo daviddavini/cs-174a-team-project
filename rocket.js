@@ -212,9 +212,9 @@ export class Rocket extends Scene {
             this.shapes[planet].draw(context, program_state, planet_transform, this.materials[planet]);
         }
 		
-        let uranus_ring_transform = this.uranus.times(Mat4.scale(3,3,0.1));
+        let uranus_ring_transform = this.uranus.times(Mat4.scale(3,0.1,8));
         this.shapes.uranusring.draw(context, program_state, uranus_ring_transform, this.materials.uranusring);
-        let saturn_ring_transform = this.saturn.times(Mat4.scale(3,3,0.1));
+        let saturn_ring_transform = this.saturn.times(Mat4.scale(3,0.1,8));
         this.shapes.saturnring.draw(context, program_state, saturn_ring_transform, this.materials.saturnring);
 
         // Draw the starry background 
