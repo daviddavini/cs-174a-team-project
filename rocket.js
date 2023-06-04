@@ -88,6 +88,7 @@ export class Rocket extends Scene {
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 10), vec3(0, 0, 0), vec3(0, 1, 0));
         this.rot_scale = 1;
         this.planet_scale = 3000000;
+        this.time_scale = 1;
     }
 
     move_left() {
@@ -146,6 +147,9 @@ export class Rocket extends Scene {
         else if (scale_name === "planetSize"){
             this.planet_scale = new_value;
         }
+        else if (scale_name === "time"){
+            this.time_scale = new_value / 1000;
+        }
     }
 
     set_camera_state(val){
@@ -178,7 +182,8 @@ export class Rocket extends Scene {
         this.create_slider(1, 3000000, this.planet_scale, "planetSize");
         this.new_line();
         this.create_slider(1, 666, this.rot_scale, "rotation");
-
+        this.new_line();
+        this.create_slider(1,1000, this.time_scale * 1000, "time");
     }
 
     pause() {
@@ -201,7 +206,7 @@ export class Rocket extends Scene {
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
 
-        const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
+        const t = program_state.animation_time * this.time_scale / 1000, dt = program_state.animation_delta_time * this.time_scale / 1000;
 
         // The parameters of the Light are: position, color, size
         program_state.lights = [new Light(vec4(0, 0, 0, 1), color(1, 1, 1, 1), 10000)];
@@ -245,7 +250,7 @@ export class Rocket extends Scene {
 
         // Draw the starry background 
         const bg_radius = 300
-        const bg_transformation = Mat4.scale(bg_radius, bg_radius, bg_radius).times(Mat4.rotation(0.03*t, 0, 1, 0));
+        const bg_transformation = Mat4.scale(bg_radius, bg_radius, bg_radius).times(Mat4.rotation(0.03*t/this.time_scale, 0, 1, 0));
         this.shapes.background.draw(context, program_state, bg_transformation, this.materials.background);
 
 
