@@ -91,6 +91,9 @@ export class Rocket extends Scene {
 
         const new_date = () => {
             this.date = date_widget.value;
+            let current_date = new Date(this.date);
+            let julianDate = getJulianDate_Planets(current_date.getFullYear(), current_date.getMonth(), current_date.getDay());
+            this.lastTGen = (julianDate-2451545.0)/36525;
         }
 
         date_widget.addEventListener("change", new_date);
@@ -105,6 +108,7 @@ export class Rocket extends Scene {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
         this.date = "2023-05-25";
         this.paused = false;
+        this.days = 0.0;
         this.date_select();
         this.new_line();
         this.key_triggered_button("Pause/Play", ["Control", "0"], () => this.pause());
@@ -121,6 +125,10 @@ export class Rocket extends Scene {
 
     pause() {
         this.paused = !(this.paused);
+        let current_date = new Date(this.date);
+        current_date.setDate(current_date.getDate() + this.days)
+        this.days = 0.0;
+        this.date = current_date.toISOString().slice(0, 10);
     }
 
     display(context, program_state) {
@@ -146,12 +154,12 @@ export class Rocket extends Scene {
         let sun_radius_kms = 695_700;
         let sun_radius = sun_radius_kms * kms_to_aus * sun_scale_factor;
 
-        let current_date = new Date(this.date);
-        let julianDate = getJulianDate_Planets(current_date.getFullYear(), current_date.getMonth(), current_date.getDay());
-        let widget_TGen = (julianDate-2451545.0)/36525;
-        let continuous_TGen = this.lastTGen + 0.0015*dt;
-        let TGen = this.paused ? widget_TGen : continuous_TGen;
-        this.lastTGen = TGen;
+        let TGen = this.lastTGen;
+        if(!(this.paused)){
+            TGen += 0.0015*dt;
+            this.days += dt;
+            this.lastTGen = TGen;
+        }
 
         // TODO: Create Planets (Requirement 1)
         const sun_transform = Mat4.scale(sun_radius, sun_radius, sun_radius);
