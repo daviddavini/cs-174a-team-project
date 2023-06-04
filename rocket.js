@@ -24,8 +24,8 @@ export class Rocket extends Scene {
             uranus: new defs.Subdivision_Sphere(planet_subdivs),
             neptune: new defs.Subdivision_Sphere(planet_subdivs),
             pluto: new defs.Subdivision_Sphere(planet_subdivs),
-            uranusring: new defs.Torus(15,15),
-            saturnring: new defs.Torus(15,15),
+            uranusring: new defs.Torus(30,30),
+            saturnring: new defs.Torus(30,30),
             background: new defs.Subdivision_Sphere(6),
             rocket: new Shape_From_File("our-assets/rocketship2.obj"),
         };
@@ -212,9 +212,9 @@ export class Rocket extends Scene {
             this.shapes[planet].draw(context, program_state, planet_transform, this.materials[planet]);
         }
 		
-        let uranus_ring_transform = this.uranus.times(Mat4.scale(3,3,0.1));
+        let uranus_ring_transform = this.uranus.times(Mat4.rotation(Math.PI/2,1,0,0)).times(Mat4.scale(3,3,0.1));
         this.shapes.uranusring.draw(context, program_state, uranus_ring_transform, this.materials.uranusring);
-        let saturn_ring_transform = this.saturn.times(Mat4.scale(3,3,0.1));
+        let saturn_ring_transform = this.saturn.times(Mat4.rotation(Math.PI/2,1,0,0)).times(Mat4.scale(3,3,0.1));
         this.shapes.saturnring.draw(context, program_state, saturn_ring_transform, this.materials.saturnring);
 
         // Draw the starry background 
@@ -502,7 +502,6 @@ class Ring_Shader extends Shader {
 
     vertex_glsl_code() {
         // ********* VERTEX SHADER *********
-        // TODO:  Complete the main function of the vertex shader (Extra Credit Part II).
         return this.shared_glsl_code() + `
         attribute vec3 position;
         uniform mat4 model_transform;
@@ -517,7 +516,6 @@ class Ring_Shader extends Shader {
 
     fragment_glsl_code() {
         // ********* FRAGMENT SHADER *********
-        // TODO:  Complete the main function of the fragment shader (Extra Credit Part II).
         return this.shared_glsl_code() + `
         void main(){
             float scalar = 0.4* sin( 3.0 * distance(point_position.xyz, center.xyz));
