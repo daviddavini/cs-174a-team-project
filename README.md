@@ -44,7 +44,7 @@ Moving the rocket
 | ----------- | ----------- |
 | Enter rocket mode      | t       |
 | Add thrust   | m        |
-| Forward/Left/Back/Right | i j k l |
+| Up/Left/Down/Right | i j k l |
 
 Other
 
