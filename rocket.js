@@ -85,24 +85,17 @@ export class Rocket extends Scene {
             })
         }
 
+        this.moving_up = false;
+        this.moving_down = false;
+        this.moving_left = false;
+        this.moving_right = false;
+        this.thrust = false;
+
+        this.velocity = 0;
+
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 10), vec3(0, 0, 0), vec3(0, 1, 0));
     }
 
-    move_left() {
-        this.rocket_matrix = this.rocket_matrix.times(Mat4.translation(-0.2,0,0));
-    }
-
-    move_right() {
-        this.rocket_matrix = this.rocket_matrix.times(Mat4.translation(0.2,0,0));
-    }
-
-    move_up() {
-        this.rocket_matrix = this.rocket_matrix.times(Mat4.translation(0,1,0));
-    }
-
-    move_down() {
-        this.rocket_matrix = this.rocket_matrix.times(Mat4.translation(0,-1,0));
-    }
     date_select(recipient = this, parent = this.control_panel) {
         const date_widget = parent.appendChild(document.createElement("INPUT"));
         date_widget.setAttribute("id", "date");
@@ -145,10 +138,11 @@ export class Rocket extends Scene {
         this.key_triggered_button("Pause/Play", ["Control", "0"], () => this.pause());
         this.key_triggered_button("Camera to Rocket", ["t"], () => this.set_camera_state(true));
         this.key_triggered_button("View Solar System", ["y"], () => this.set_camera_state(false));
-        this.key_triggered_button("Move Left", ["j"], () => this.move_left());
-        this.key_triggered_button("Move Up", ["i"], () => this.move_up());
-        this.key_triggered_button("Move Down", ["k"], () => this.move_down());
-        this.key_triggered_button("Move Right", ["l"], () => this.move_right());
+        this.key_triggered_button("Move Left", ["j"], () => {this.moving_left = true}, '#6E6460', () => {this.moving_left = false});
+        this.key_triggered_button("Move Up", ["i"], () => {this.moving_up = true}, '#6E6460', () => {this.moving_up = false});
+        this.key_triggered_button("Move Down", ["k"], () => {this.moving_down = true}, '#6E6460', () => {this.moving_down = false});
+        this.key_triggered_button("Move Right", ["l"], () => {this.moving_right = true}, '#6E6460', () => {this.moving_right = false});
+        this.key_triggered_button("Thrust", ["m"], () => {this.thrust = true}, '#6E6460', () => {this.thrust = false});
         // this.key_triggered_button("View solar system", ["Control", "0"], () => this.attached = () => null);
         // this.new_line();
         // this.key_triggered_button("Attach to planet 1", ["Control", "1"], () => this.attached = () => this.planet_1);
@@ -228,21 +222,35 @@ export class Rocket extends Scene {
         const bg_transformation = Mat4.scale(bg_radius, bg_radius, bg_radius).times(Mat4.rotation(0.03*t, 0, 1, 0));
         this.shapes.background.draw(context, program_state, bg_transformation, this.materials.background);
 
-
+        const angular_speed = 0.02;
         // Add camera and rocket controls.
-        const rocket_scale = 0.25;
+        const rocket_scale = 0.01;
         if(this.attached == undefined){ //reset rocket to rotate around earth if player not controlling
             var rocket_transform = this.earth.times(Mat4.translation(10,5,0).times(Mat4.scale(rocket_scale,rocket_scale,rocket_scale)));
-            rocket_transform = rocket_transform.times(Mat4.rotation(2,0,1,0));
             this.shapes.rocket.draw(context, program_state, rocket_transform, this.materials.rocket);
         }
         else{ // go back to the rocket_matrix to start moving the rocket
+            if (this.moving_up) {
+                this.rocket_matrix = this.rocket_matrix.times(Mat4.rotation(angular_speed,1,0,0));
+            } if (this.moving_down) {
+                this.rocket_matrix = this.rocket_matrix.times(Mat4.rotation(-angular_speed,1,0,0));
+            } if (this.moving_left) {
+                this.rocket_matrix = this.rocket_matrix.times(Mat4.rotation(angular_speed,0,0,1));
+            } if (this.moving_right) {
+                this.rocket_matrix = this.rocket_matrix.times(Mat4.rotation(-angular_speed,0,0,1));
+            } if (this.thrust) {
+                this.velocity += 0.0001;
+            } 
+            // friction
+            this.velocity *= 0.99;
+            this.rocket_matrix = this.rocket_matrix.times(Mat4.translation(0,this.velocity,0));
             var rocket_transform = this.rocket_matrix.times(Mat4.scale(rocket_scale,rocket_scale,rocket_scale));
             this.shapes.rocket.draw(context, program_state, rocket_transform, this.materials.rocket);
         }
 
-        this.rocket_cam = Mat4.inverse(rocket_transform.times(Mat4.translation(1,-1.5,20)));
-        //this.rocket_cam = this.rocket_cam.times(Mat4.rotation(45,1,0,0));
+        this.rocket_cam = Mat4.inverse(this.rocket_matrix);
+        this.rocket_cam = Mat4.rotation(-Math.PI/180 * 70, 1,0,0).times(this.rocket_cam);
+        this.rocket_cam = Mat4.translation(0,0,-0.2).times(this.rocket_cam);
 
         if(this.attached != undefined){
             program_state.camera_inverse = this.attached().map((x,i) => Vector.from(program_state.camera_inverse[i]).mix(x, 0.1));
