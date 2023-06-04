@@ -27,7 +27,7 @@ export class Rocket extends Scene {
             uranusring: new defs.Torus(30,30),
             saturnring: new defs.Torus(30,30),
             background: new defs.Subdivision_Sphere(6),
-            rocket: new Shape_From_File("our-assets/rocketship2.obj"),
+            rocket: new Shape_From_File("our-assets/rocketship.obj"),
         };
 
         // Shader options common to all planets
