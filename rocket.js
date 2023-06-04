@@ -86,6 +86,8 @@ export class Rocket extends Scene {
         }
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 10), vec3(0, 0, 0), vec3(0, 1, 0));
+        this.rot_scale = 1;
+        this.planet_scale = 3000000;
     }
 
     move_left() {
@@ -122,40 +124,29 @@ export class Rocket extends Scene {
         date_widget.addEventListener("change", new_date);
     }
 
-    planet_slider(recipient = this, parent = this.control_panel) {
-        this.planet_scale = 3000000;
+    create_slider(min, max, initial, scale_name, recipient = this, parent = this.control_panel) {
         const scale_slide = parent.appendChild(document.createElement("INPUT"));
-        scale_slide.setAttribute("id", "planetRange");
+        scale_slide.setAttribute("id", scale_name);
         scale_slide.setAttribute("type", "range");
-        scale_slide.setAttribute("min", 5000);
-        scale_slide.setAttribute("max", 3000000);
+        scale_slide.setAttribute("min", min);
+        scale_slide.setAttribute("max", max);
         scale_slide.setAttribute("class", "slider");
-        scale_slide.setAttribute("value", this.planet_scale);
+        scale_slide.setAttribute("value", initial);
 
-        const new_scale = () => {
-            this.planet_scale = scale_slide.value;
+        const slid = () => {
+            this.change_value(scale_name, scale_slide.value);
         }
-
-        scale_slide.addEventListener("change", new_scale);
+        scale_slide.addEventListener("change", slid);
     }
 
-    rotation_slider(recipient = this, parent = this.control_panel) {
-        this.rot_scale = 1;
-        const rot_slide = parent.appendChild(document.createElement("INPUT"));
-        rot_slide.setAttribute("id", "rotRange");
-        rot_slide.setAttribute("type", "range");
-        rot_slide.setAttribute("min", 1);
-        rot_slide.setAttribute("max", 1000);
-        rot_slide.setAttribute("class", "slider");
-        rot_slide.setAttribute("value", this.rot_scale*1000);
-
-        const new_rot = () => {
-            this.rot_scale = rot_slide.value / 1000;
+    change_value(scale_name, new_value){
+        if(scale_name === "rotation"){
+            this.rot_scale = new_value;
         }
-
-        rot_slide.addEventListener("change", new_rot);
+        else if (scale_name === "planetSize"){
+            this.planet_scale = new_value;
+        }
     }
-
 
     set_camera_state(val){
         if(val == false){
@@ -184,18 +175,10 @@ export class Rocket extends Scene {
         this.key_triggered_button("Move Down", ["k"], () => this.move_down());
         this.key_triggered_button("Move Right", ["l"], () => this.move_right());
         this.new_line();
-        this.planet_slider();
+        this.create_slider(1, 3000000, this.planet_scale, "planetSize");
         this.new_line();
-        this.rotation_slider();
-        // this.key_triggered_button("View solar system", ["Control", "0"], () => this.attached = () => null);
-        // this.new_line();
-        // this.key_triggered_button("Attach to planet 1", ["Control", "1"], () => this.attached = () => this.planet_1);
-        // this.key_triggered_button("Attach to planet 2", ["Control", "2"], () => this.attached = () => this.planet_2);
-        // this.new_line();
-        // this.key_triggered_button("Attach to planet 3", ["Control", "3"], () => this.attached = () => this.planet_3);
-        // this.key_triggered_button("Attach to planet 4", ["Control", "4"], () => this.attached = () => this.planet_4);
-        // this.new_line();
-        // this.key_triggered_button("Attach to moon", ["Control", "m"], () => this.attached = () => this.moon);
+        this.create_slider(1, 666, this.rot_scale, "rotation");
+
     }
 
     pause() {
