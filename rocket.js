@@ -122,6 +122,40 @@ export class Rocket extends Scene {
         date_widget.addEventListener("change", new_date);
     }
 
+    planet_slider(recipient = this, parent = this.control_panel) {
+        this.planet_scale = 3000000;
+        const scale_slide = parent.appendChild(document.createElement("INPUT"));
+        scale_slide.setAttribute("id", "planetRange");
+        scale_slide.setAttribute("type", "range");
+        scale_slide.setAttribute("min", 5000);
+        scale_slide.setAttribute("max", 3000000);
+        scale_slide.setAttribute("class", "slider");
+        scale_slide.setAttribute("value", this.planet_scale);
+
+        const new_scale = () => {
+            this.planet_scale = scale_slide.value;
+        }
+
+        scale_slide.addEventListener("change", new_scale);
+    }
+
+    rotation_slider(recipient = this, parent = this.control_panel) {
+        this.rot_scale = 1;
+        const rot_slide = parent.appendChild(document.createElement("INPUT"));
+        rot_slide.setAttribute("id", "rotRange");
+        rot_slide.setAttribute("type", "range");
+        rot_slide.setAttribute("min", 1);
+        rot_slide.setAttribute("max", 1000);
+        rot_slide.setAttribute("class", "slider");
+        rot_slide.setAttribute("value", this.rot_scale*1000);
+
+        const new_rot = () => {
+            this.rot_scale = rot_slide.value / 1000;
+        }
+
+        rot_slide.addEventListener("change", new_rot);
+    }
+
 
     set_camera_state(val){
         if(val == false){
@@ -149,6 +183,10 @@ export class Rocket extends Scene {
         this.key_triggered_button("Move Up", ["i"], () => this.move_up());
         this.key_triggered_button("Move Down", ["k"], () => this.move_down());
         this.key_triggered_button("Move Right", ["l"], () => this.move_right());
+        this.new_line();
+        this.planet_slider();
+        this.new_line();
+        this.rotation_slider();
         // this.key_triggered_button("View solar system", ["Control", "0"], () => this.attached = () => null);
         // this.new_line();
         // this.key_triggered_button("Attach to planet 1", ["Control", "1"], () => this.attached = () => this.planet_1);
@@ -186,7 +224,7 @@ export class Rocket extends Scene {
         program_state.lights = [new Light(vec4(0, 0, 0, 1), color(1, 1, 1, 1), 10000)];
 
         const kms_to_aus = 6.68459e-9;
-        const scale_factor = 3_000_000;
+        const scale_factor = this.planet_scale;
         const sun_scale_factor = 10;
         let sun_radius_kms = 695_700;
         let sun_radius = sun_radius_kms * kms_to_aus * sun_scale_factor;
@@ -203,14 +241,13 @@ export class Rocket extends Scene {
 
         const planets = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'];
         const axis_angles = { 'mercury': 2, 'venus': 3, 'earth': 23.5, 'mars': 25, 'jupiter': 3, 'saturn': 27, 'uranus': 98, 'neptune': 28 };
-        let earth_rot_speed = 1;
         const planet_rot_speeds = { 'mercury': 24 / 1408, 'venus': 24 / 5832, 'earth': 24 / 24, 'mars': 24 / 25, 'jupiter': 24 / 10, 'saturn': 24 / 11, 'uranus': 24 / 17, 'neptune': 24 / 16 };
         const planet_radii_kms = { 'mercury': 2.4397, 'venus': 6.0518, 'earth': 6.371, 'mars': 3.3895, 'jupiter': 69.911, 'saturn': 58.232, 'uranus': 25.362, 'neptune': 24.622 };
 
         for (const planet of planets) {
             const planet_coords = plotPlanet_Planets(TGen, planets.indexOf(planet));
             const planet_radius = planet_radii_kms[planet] * kms_to_aus * scale_factor;
-            const planet_rot = planet_rot_speeds[planet] * earth_rot_speed * t;
+            const planet_rot = planet_rot_speeds[planet] * this.rot_scale * t;
             const planet_axis_angle = axis_angles[planet] * Math.PI / 180;
             let planet_transform = Mat4.translation(planet_coords[0], 0, planet_coords[1]).times(Mat4.scale(planet_radius, planet_radius, planet_radius));
             planet_transform = planet_transform.times(Mat4.rotation(planet_rot, Math.sin(planet_axis_angle), Math.cos(planet_axis_angle), 0));
