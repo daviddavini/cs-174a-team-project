@@ -27,7 +27,7 @@ export class Rocket extends Scene {
             uranusring: new defs.Torus(30,30),
             saturnring: new defs.Torus(30,30),
             background: new defs.Subdivision_Sphere(6),
-            rocket: new Shape_From_File("our-assets/rocketship.obj"),
+            rocket: new Shape_From_File("our-assets/rocketship2.obj"),
             particle: new defs.Subdivision_Sphere(2),
         };
 
@@ -94,6 +94,7 @@ export class Rocket extends Scene {
         this.moving_left = false;
         this.moving_right = false;
         this.thrust = false;
+        this.angle = 0;
 
         this.velocity = 0;
 
@@ -287,8 +288,25 @@ export class Rocket extends Scene {
             } 
             // friction
             this.velocity *= 0.99;
+            this.angular_velocity_ratio = 1000;
+            this.angular_velocity = this.velocity * this.angular_velocity_ratio;
+            // this.angular_velocity = 0;
+            this.angle += this.angular_velocity * dt;
+            // make dynamics tend towards multiples of pi
+            this.reset_weight = 5;
+            if (this.thrust) {
+                this.reset_term = 0;
+            } else {
+                this.reset_term = Math.sin(this.angle);
+                if ((this.angle-Math.PI/2) % (2*Math.PI) > Math.PI) {
+                    this.reset_term *= -1;
+                }
+            }
+            this.angle += this.reset_term * this.reset_weight * dt;
             this.rocket_matrix = this.rocket_matrix.times(Mat4.translation(0,this.velocity,0));
             var rocket_transform = this.rocket_matrix.times(Mat4.scale(this.rocket_scale,this.rocket_scale,this.rocket_scale));
+            // twist rocket
+            rocket_transform = rocket_transform.times(Mat4.rotation(this.angle,0,1,0));
             this.shapes.rocket.draw(context, program_state, rocket_transform, this.materials.rocket);
 
             this.update_particles(context, program_state);
