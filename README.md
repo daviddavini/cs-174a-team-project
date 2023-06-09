@@ -60,8 +60,13 @@ Note: Buttons for controls can be found below the simulation window
 
 ## How to run it
 
-// TODO
+The best way to begin running our program is to execute server.py in Python.
+
+Next, navigate to localhost:8000 on your browser.
+
+Please allow a couple seconds for the simulation to finish loading -- the images loaded are high-resolution so it will take a second. After the simulation is done loading, the controls shown above can be used to explore the simulation.
 
 ## Code Sources
 
-// TODO
+- [NASA's Approximate Planetary Position Calculations] https://ssd.jpl.nasa.gov/planets/approx_pos.html
+- [CS174A Assignment 3] 
