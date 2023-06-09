@@ -47,7 +47,7 @@ In order to pick a specific date, there is a calendar widget below the simulatio
 | Up/Left/Down/Right | i j k l |
 | Spin Left/Right | u o |
 
-###Other
+### Other
 
 | Function    | Control |
 | ----------- | ----------- |
