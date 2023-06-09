@@ -86,7 +86,7 @@ export class Rocket extends Scene {
                 {ambient: .5, diffusivity: 1, specularity: 1, shininess: 1000, color: hex_color("#9FA1A3")
             }),
             rocket_particle: new Material(new defs.Phong_Shader(),
-                {ambient:1, color: hex_color("#992200", 0.5)
+                {ambient:1, color: hex_color("#573F16", 0.5)
             }),
             sun_particle: new Material(new defs.Phong_Shader(),
                 {ambient:1, diffusivity: 0, specularity: 0, color: hex_color("#FF0000", 0.2)}),
@@ -101,9 +101,11 @@ export class Rocket extends Scene {
 
         this.velocity = 0;
 
-        this.thrust_particles = [];
+        this.particles = [];
 
+        this.is_attached = false;
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 10), vec3(0, 0, 0), vec3(0, 1, 0));
+        this.attached = () => this.initial_camera_location;
     }
 
     date_select(recipient = this, parent = this.control_panel) {
@@ -128,9 +130,13 @@ export class Rocket extends Scene {
 
     set_camera_state(val){
         if(val == false){
+            this.is_attached = false;
+            this.hard_camera_swap = true;
             this.attached = () => this.initial_camera_location;
         }
         else{
+            this.is_attached = true;
+            this.hard_camera_swap = false;
             this.attached = () => this.rocket_cam;
         }
     }
@@ -174,30 +180,27 @@ export class Rocket extends Scene {
         this.date = current_date.toISOString().slice(0, 10);
     }
 
-    update_particles(context, program_state) {
+    update_particles(context, program_state, dt) {
         // create sun particles
-        const sun_particles_per_second = 300
-        // randomly decide how many particles to create, using dt to make it framerate independent
-        const create_particles = Math.random() < sun_particles_per_second * program_state.animation_delta_time / 1000;
-        if (create_particles) {
-            let point = random_point_on_sphere(0,0,0,this.sun_radius*0.9);
-            let sun_surface_transform = Mat4.translation(point[0], point[1], point[2]);
-            this.create_particle({
-                shape: this.shapes.sun_particle,
-                material: this.materials.sun_particle, 
-                source_matrix: sun_surface_transform, 
-                random_walk_speed: 0, 
-                linear_speed: 0.01, 
-                scale: 0.01, 
-                time_limit: 3000
-            });
-        }
+        const sun_particles_per_sec = 100;
+        let point = random_point_on_sphere(0,0,0,this.sun_radius*0.95);
+        let sun_surface_transform = Mat4.translation(point[0], point[1], point[2]);
+        this.create_particles({
+            shape: this.shapes.sun_particle,
+            material: this.materials.sun_particle, 
+            source_matrix: sun_surface_transform, 
+            random_walk_speed: 0, 
+            linear_speed: 0.003, 
+            scale: 0.01, 
+            time_limit: 3000
+        }, sun_particles_per_sec, dt);
+
         
         // update all particles
-        for (let particle of this.thrust_particles) {
+        for (let particle of this.particles) {
             let time = Date.now();
             if (time - particle.time > particle.time_limit) {
-                this.thrust_particles.expired = true;
+                this.particles.expired = true;
             } else {
                 const scale = particle.scale * (1 - (time - particle.time) / particle.time_limit);
                 let particle_transform = particle.matrix.times(Mat4.scale(scale, scale, scale));
@@ -212,7 +215,23 @@ export class Rocket extends Scene {
                 particle.matrix = particle.matrix.times(Mat4.translation(dx, dy, dz));
             }
         }
-        this.thrust_particles = this.thrust_particles.filter(particle => !particle.expired);
+        this.particles = this.particles.filter(particle => !particle.expired);
+    }
+
+    create_particles(params, particles_per_second, dt) {
+        // randomly decide how many particles to create, using dt to make it framerate independent
+        const particles = particles_per_second * dt;
+        const particles_int = Math.floor(particles);
+        let particles_to_create = particles_int;
+        if (particles < 10) {
+            const particles_frac = particles - particles_int;
+            particles_to_create += (Math.random() < particles_frac ? 1 : 0);    
+        }
+        // Avoid creating too many particles at once
+        particles_to_create = Math.min(particles_to_create, 10);
+        for (let i = 0; i < particles_to_create; i++) {
+            this.create_particle(params);
+        }
     }
 
     create_particle(params) {
@@ -234,7 +253,7 @@ export class Rocket extends Scene {
             material: params.material,
             scale: random_scale,
         }
-        this.thrust_particles.push(particle);
+        this.particles.push(particle);
     }
 
     display(context, program_state) {
@@ -243,6 +262,11 @@ export class Rocket extends Scene {
         if (!context.scratchpad.controls) {
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
             // Define the global camera and projection matrices, which are stored in program_state.
+            program_state.set_camera(this.initial_camera_location);
+        }
+
+        if (this.hard_camera_swap) {
+            this.hard_camera_swap = false;
             program_state.set_camera(this.initial_camera_location);
         }
 
@@ -303,7 +327,7 @@ export class Rocket extends Scene {
         this.rocket_scale = 0.01;
         this.particle_scale_factor = 0.1;
         const particle_scale = this.rocket_scale * this.particle_scale_factor;
-        if(this.attached == undefined){ //reset rocket to rotate around earth if player not controlling
+        if(!this.is_attached){ //reset rocket to rotate around earth if player not controlling
             var rocket_transform = this.earth.times(Mat4.translation(10,5,0).times(Mat4.scale(this.rocket_scale,this.rocket_scale,this.rocket_scale)));
             this.shapes.rocket.draw(context, program_state, rocket_transform, this.materials.rocket);
         }
@@ -323,16 +347,17 @@ export class Rocket extends Scene {
             }
             if (this.thrust) {
                 this.velocity += 0.0001;
-                const particle_source_matrix = this.rocket_matrix.times(Mat4.translation(0,-this.rocket_scale,0));
-                this.create_particle({
+                const particle_source_matrix = this.rocket_matrix.times(Mat4.translation(0,-this.rocket_scale*0.9,0));
+                const rocket_particles_per_second = 30;
+                this.create_particles({
                     shape: this.shapes.rocket_particle,
                     material: this.materials.rocket_particle, 
                     source_matrix: particle_source_matrix, 
-                    random_walk_speed: particle_scale, 
+                    random_walk_speed: particle_scale*1.2, 
                     linear_speed: 0, 
                     scale: particle_scale, 
                     time_limit: 1000,
-                })
+                }, rocket_particles_per_second, dt)
             } 
             // friction
             this.velocity *= 0.99;
@@ -341,16 +366,16 @@ export class Rocket extends Scene {
             // this.angular_velocity = 0;
             this.angle += this.angular_velocity * dt;
             // make dynamics tend towards multiples of pi
-            this.reset_weight = 5;
-            if (this.thrust) {
-                this.reset_term = 0;
-            } else {
-                this.reset_term = Math.sin(this.angle);
-                if ((this.angle-Math.PI/2) % (2*Math.PI) > Math.PI) {
-                    this.reset_term *= -1;
-                }
-            }
-            this.angle += this.reset_term * this.reset_weight * dt;
+            // this.reset_weight = 5;
+            // if (this.thrust) {
+            //     this.reset_term = 0;
+            // } else {
+            //     this.reset_term = Math.sin(this.angle);
+            //     if ((this.angle-Math.PI/2) % (2*Math.PI) > Math.PI) {
+            //         this.reset_term *= -1;
+            //     }
+            // }
+            // this.angle += this.reset_term * this.reset_weight * dt;
             this.rocket_matrix = this.rocket_matrix.times(Mat4.translation(0,this.velocity,0));
             var rocket_transform = this.rocket_matrix.times(Mat4.scale(this.rocket_scale,this.rocket_scale,this.rocket_scale));
             // twist rocket
@@ -358,13 +383,13 @@ export class Rocket extends Scene {
             this.shapes.rocket.draw(context, program_state, rocket_transform, this.materials.rocket);
 
         }
-        this.update_particles(context, program_state);
+        this.update_particles(context, program_state, dt);
 
         this.rocket_cam = Mat4.inverse(this.rocket_matrix);
         this.rocket_cam = Mat4.rotation(-Math.PI/180 * 70, 1,0,0).times(this.rocket_cam);
         this.rocket_cam = Mat4.translation(0,0,-0.2).times(this.rocket_cam);
 
-        if(this.attached != undefined){
+        if(this.is_attached){
             program_state.camera_inverse = this.attached().map((x,i) => Vector.from(program_state.camera_inverse[i]).mix(x, 0.1));
 
         }
