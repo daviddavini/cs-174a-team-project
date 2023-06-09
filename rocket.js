@@ -177,6 +177,7 @@ export class Rocket extends Scene {
         }
         else if (scale_name === "time"){
             this.time_scale = new_value / 1000;
+            this.last_path_particle = {}; // reset last times for path particles
         }
     }
 
@@ -321,7 +322,10 @@ export class Rocket extends Scene {
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
 
-        const t = program_state.animation_time * this.time_scale / 1000, dt = program_state.animation_delta_time * this.time_scale / 1000;
+        const t = program_state.animation_time / 1000;
+        const dt = program_state.animation_delta_time / 1000;
+        const t_adj = t * this.time_scale;
+        const dt_adj = dt * this.time_scale;
 
         // The parameters of the Light are: position, color, size
         this.sun_light = new Light(vec4(0, 0, 0, 1), color(1, 1, 1, 1), 30000)
@@ -336,8 +340,8 @@ export class Rocket extends Scene {
         let TGen = this.lastTGen;
         const time_conversion = 0.0015;
         if(!(this.paused)){
-            TGen += time_conversion*dt;
-            this.days += dt;
+            TGen += time_conversion*dt_adj;
+            this.days += dt_adj;
             this.lastTGen = TGen;
         }
 
@@ -368,7 +372,7 @@ export class Rocket extends Scene {
         for (const planet of planets) {
             const planet_coords = plotPlanet_Planets(TGen, planets.indexOf(planet));
             const planet_radius = planet_radii_kms[planet] * kms_to_aus * scale_factor;
-            const planet_rot = planet_rot_speeds[planet] * this.rot_scale * t;
+            const planet_rot = planet_rot_speeds[planet] * this.rot_scale * t_adj;
             const planet_axis_angle = axis_angles[planet] * Math.PI / 180;
             let planet_transform = Mat4.translation(planet_coords[0], 0, planet_coords[1]);
             planet_transform = planet_transform.times(Mat4.rotation(planet_rot, Math.sin(planet_axis_angle), Math.cos(planet_axis_angle), 0));
@@ -376,11 +380,11 @@ export class Rocket extends Scene {
             planet_transform = planet_transform.times(Mat4.scale(planet_radius, planet_radius, planet_radius));
             this[planet] = planet_transform;
             this.shapes[planet].draw(context, program_state, planet_transform, this.materials[planet]);
-            const particle_gap = 0.5;
+            const particle_gap = 0.0001*planet_year_in_earth_days[planet];
             // use t and dt to determine if particle_gap seconds have passed since last particle creation
-            if (!(planet in this.last_path_particle) || (t - this.last_path_particle[planet]) > 0.0001*planet_year_in_earth_days[planet]) {
-                this.last_path_particle[planet] = t;
-                const particle_time_limit = 10 * planet_year_in_earth_days[planet];
+            if (!(planet in this.last_path_particle) || (t_adj - this.last_path_particle[planet]) > particle_gap) {
+                this.last_path_particle[planet] = t_adj;
+                const particle_time_limit = 10 * planet_year_in_earth_days[planet]/ this.time_scale;
                 this.create_particle({
                     shape: this.shapes.path_particle,
                     material: this.materials.path_particle,
@@ -401,7 +405,7 @@ export class Rocket extends Scene {
 
         // Draw the starry background 
         const bg_radius = 300
-        const bg_transformation = Mat4.scale(bg_radius, bg_radius, bg_radius).times(Mat4.rotation(0.03*t/this.time_scale, 0, 1, 0));
+        const bg_transformation = Mat4.scale(bg_radius, bg_radius, bg_radius).times(Mat4.rotation(0.03*t, 0, 1, 0));
         this.shapes.background.draw(context, program_state, bg_transformation, this.materials.background);
 
         const angular_speed = 0.02;
