@@ -38,7 +38,8 @@ export class Rocket extends Scene {
             ambient: 0.5, diffusivity: 0.5, specularity: 0.5,
         };
         // Set initial rocket location to initial sun location
-        this.rocket_matrix = Mat4.identity().times(Mat4.scale(2,2,2)).times(Mat4.translation(0,0,-3));
+        this.default_rocket_matrix = Mat4.identity().times(Mat4.scale(2,2,2)).times(Mat4.translation(0,0,-3));
+        this.rocket_matrix = this.default_rocket_matrix;
         this.to_rocket = false;
 
         // *** Materials
@@ -106,6 +107,8 @@ export class Rocket extends Scene {
         this.is_attached = false;
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 10), vec3(0, 0, 0), vec3(0, 1, 0));
         this.attached = () => this.initial_camera_location;
+
+        this.unscaled_transforms = {};
     }
 
     date_select(recipient = this, parent = this.control_panel) {
@@ -306,8 +309,10 @@ export class Rocket extends Scene {
             const planet_radius = planet_radii_kms[planet] * kms_to_aus * scale_factor;
             const planet_rot = planet_rot_speeds[planet] * earth_rot_speed * t;
             const planet_axis_angle = axis_angles[planet] * Math.PI / 180;
-            let planet_transform = Mat4.translation(planet_coords[0], 0, planet_coords[1]).times(Mat4.scale(planet_radius, planet_radius, planet_radius));
+            let planet_transform = Mat4.translation(planet_coords[0], 0, planet_coords[1]);
             planet_transform = planet_transform.times(Mat4.rotation(planet_rot, Math.sin(planet_axis_angle), Math.cos(planet_axis_angle), 0));
+            this.unscaled_transforms[planet] = planet_transform;
+            planet_transform = planet_transform.times(Mat4.scale(planet_radius, planet_radius, planet_radius));
             this[planet] = planet_transform;
             this.shapes[planet].draw(context, program_state, planet_transform, this.materials[planet]);
         }
@@ -328,7 +333,9 @@ export class Rocket extends Scene {
         this.particle_scale_factor = 0.1;
         const particle_scale = this.rocket_scale * this.particle_scale_factor;
         if(!this.is_attached){ //reset rocket to rotate around earth if player not controlling
-            var rocket_transform = this.earth.times(Mat4.translation(10,5,0).times(Mat4.scale(this.rocket_scale,this.rocket_scale,this.rocket_scale)));
+            const rocket_scale_unattached = 0.1;
+            const rocket_matrix = this.unscaled_transforms.earth.times(Mat4.translation(0.3,0,0));
+            const rocket_transform = this.rocket_transform(rocket_matrix)
             this.shapes.rocket.draw(context, program_state, rocket_transform, this.materials.rocket);
         }
         else{ // go back to the rocket_matrix to start moving the rocket
@@ -377,9 +384,7 @@ export class Rocket extends Scene {
             // }
             // this.angle += this.reset_term * this.reset_weight * dt;
             this.rocket_matrix = this.rocket_matrix.times(Mat4.translation(0,this.velocity,0));
-            var rocket_transform = this.rocket_matrix.times(Mat4.scale(this.rocket_scale,this.rocket_scale,this.rocket_scale));
-            // twist rocket
-            rocket_transform = rocket_transform.times(Mat4.rotation(this.angle,0,1,0));
+            const rocket_transform = this.rocket_transform(this.rocket_matrix);
             this.shapes.rocket.draw(context, program_state, rocket_transform, this.materials.rocket);
 
         }
@@ -393,6 +398,20 @@ export class Rocket extends Scene {
             program_state.camera_inverse = this.attached().map((x,i) => Vector.from(program_state.camera_inverse[i]).mix(x, 0.1));
 
         }
+
+        // collision detection with background
+        const rocket_translation = this.rocket_matrix.times(vec(0,0,0,1));
+        const dist_from_center = rocket_translation.norm();
+        if (dist_from_center > bg_radius) {
+            this.rocket_matrix = this.default_rocket_matrix;
+        }
+    }
+
+    rocket_transform(rocket_matrix) {
+        let rocket_transform = rocket_matrix.times(Mat4.scale(this.rocket_scale,this.rocket_scale,this.rocket_scale));
+        // twist rocket
+        rocket_transform = rocket_transform.times(Mat4.rotation(this.angle,0,1,0))
+        return rocket_transform;
     }
 }
 
