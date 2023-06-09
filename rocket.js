@@ -101,6 +101,7 @@ export class Rocket extends Scene {
         this.moving_left = false;
         this.moving_right = false;
         this.thrust = false;
+        this.play_music = true;
         this.angle = 0;
 
         this.velocity = 0;
@@ -210,6 +211,7 @@ export class Rocket extends Scene {
         this.date_select();
         this.new_line();
         this.key_triggered_button("Pause/Play", ["Control", "0"], () => this.pause());
+        this.key_triggered_button("Music", ["Control", "1"], () => {this.play_music = !this.play_music});
         this.key_triggered_button("Camera to Rocket", ["t"], () => this.set_camera_state(true));
         this.key_triggered_button("View Solar System", ["y"], () => this.set_camera_state(false));
         this.key_triggered_button("Move Left", ["j"], () => {this.moving_left = true}, '#6E6460', () => {this.moving_left = false});
@@ -320,8 +322,12 @@ export class Rocket extends Scene {
                 this.thrust_audio.pause();
             }
         }
-        if (this.bg_music.paused) {
+
+        if(this.play_music){
             this.bg_music.play();
+        }
+        else if (!this.bg_music.paused){
+            this.bg_music.pause();
         }
 
         // display():  Called once per frame of animation.
