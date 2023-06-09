@@ -30,6 +30,7 @@ export class Rocket extends Scene {
             rocket: new Shape_From_File("our-assets/rocketship2 v6.obj"),
             rocket_particle: new defs.Subdivision_Sphere(2),
             sun_particle: new defs.Subdivision_Sphere(4),
+            path_particle: new defs.Subdivision_Sphere(4),
         };
 
         // Shader options common to all planets
@@ -91,6 +92,8 @@ export class Rocket extends Scene {
             }),
             sun_particle: new Material(new defs.Phong_Shader(),
                 {ambient:1, diffusivity: 0, specularity: 0, color: hex_color("#FF0000", 0.2)}),
+            path_particle: new Material(new defs.Phong_Shader(),
+                {ambient:1, diffusivity: 0, specularity: 0, color: hex_color("#FFFFFF", 0.5)}),
         }
 
         this.moving_up = false;
@@ -113,7 +116,7 @@ export class Rocket extends Scene {
       
         this.attached = () => this.initial_camera_location;
         this.unscaled_transforms = {};
-
+        this.last_path_particle = {};
     }
 
     date_select(recipient = this, parent = this.control_panel) {
@@ -248,7 +251,8 @@ export class Rocket extends Scene {
             random_walk_speed: 0, 
             linear_speed: 0.003, 
             scale: 0.01, 
-            time_limit: 3000
+            time_limit: 3000,
+            variations: ["get_smaller"],
         }, sun_particles_per_sec, dt);
 
         
@@ -258,9 +262,19 @@ export class Rocket extends Scene {
             if (time - particle.time > particle.time_limit) {
                 this.particles.expired = true;
             } else {
-                const scale = particle.scale * (1 - (time - particle.time) / particle.time_limit);
+                const time_normalized = (1 - (time - particle.time) / particle.time_limit);
+                let scale = particle.scale;
+                if (particle.variations.includes("get_smaller")) {
+                    scale *= time_normalized;
+                }
                 let particle_transform = particle.matrix.times(Mat4.scale(scale, scale, scale));
-                particle.shape.draw(context, program_state, particle_transform, particle.material);
+                let material = particle.material;
+                if (particle.variations.includes("get_lighter")) {
+                    // change alpha value to time_normalized
+                    const new_color = color(material.color[0], material.color[1], material.color[2], material.color[3] * time_normalized);
+                    material = material.override({color: new_color});
+                }
+                particle.shape.draw(context, program_state, particle_transform, material);
                 // add random translation
                 const random_x = particle.random_walk_speed * (Math.random()*2-1);
                 const random_y = particle.random_walk_speed * (Math.random()*2-1);
@@ -308,6 +322,7 @@ export class Rocket extends Scene {
             time_limit: params.time_limit,
             material: params.material,
             scale: random_scale,
+            variations: params.variations,
         }
         this.particles.push(particle);
     }
@@ -342,8 +357,9 @@ export class Rocket extends Scene {
         this.sun_radius = sun_radius_kms * kms_to_aus * sun_scale_factor;
 
         let TGen = this.lastTGen;
+        const time_conversion = 0.0015;
         if(!(this.paused)){
-            TGen += 0.0015*dt;
+            TGen += time_conversion*dt;
             this.days += dt;
             this.lastTGen = TGen;
         }
@@ -355,6 +371,8 @@ export class Rocket extends Scene {
         const axis_angles = { 'mercury': 2, 'venus': 3, 'earth': 23.5, 'mars': 25, 'jupiter': 3, 'saturn': 27, 'uranus': 98, 'neptune': 28 };
         const planet_rot_speeds = { 'mercury': 24 / 1408, 'venus': 24 / 5832, 'earth': 24 / 24, 'mars': 24 / 25, 'jupiter': 24 / 10, 'saturn': 24 / 11, 'uranus': 24 / 17, 'neptune': 24 / 16 };
         const planet_radii_kms = { 'mercury': 2.4397, 'venus': 6.0518, 'earth': 6.371, 'mars': 3.3895, 'jupiter': 69.911, 'saturn': 58.232, 'uranus': 25.362, 'neptune': 24.622 };
+        const planet_year_in_seconds = { 'mercury': 7600530, 'venus': 19414166, 'earth': 31558149, 'mars': 59354294, 'jupiter': 374335776, 'saturn': 929596608, 'uranus': 2651370019, 'neptune': 5200418560 };
+        const planet_year_in_earth_days = {'mercury': 88, 'venus': 225, 'earth': 365, 'mars': 687, 'jupiter': 4333, 'saturn': 10759, 'uranus': 30688, 'neptune': 60182};
 
         for (const planet of planets) {
             const planet_coords = plotPlanet_Planets(TGen, planets.indexOf(planet));
@@ -367,6 +385,22 @@ export class Rocket extends Scene {
             planet_transform = planet_transform.times(Mat4.scale(planet_radius, planet_radius, planet_radius));
             this[planet] = planet_transform;
             this.shapes[planet].draw(context, program_state, planet_transform, this.materials[planet]);
+            const particle_gap = 0.5;
+            // use t and dt to determine if particle_gap seconds have passed since last particle creation
+            if (!(planet in this.last_path_particle) || (t - this.last_path_particle[planet]) > 0.0001*planet_year_in_earth_days[planet]) {
+                this.last_path_particle[planet] = t;
+                const particle_time_limit = 10 * planet_year_in_earth_days[planet];
+                this.create_particle({
+                    shape: this.shapes.path_particle,
+                    material: this.materials.path_particle,
+                    source_matrix: this.unscaled_transforms[planet],
+                    random_walk_speed: 0,
+                    linear_speed: 0,
+                    scale: 0.01,
+                    time_limit: particle_time_limit,
+                    variations: ["get_lighter"],
+                });
+            }
         }
 		
         this.uranus_ring = this.uranus.times(Mat4.rotation(Math.PI/2,1,0,0)).times(Mat4.scale(3,3,0.1));
@@ -416,6 +450,7 @@ export class Rocket extends Scene {
                     linear_speed: 0, 
                     scale: particle_scale, 
                     time_limit: 1000,
+                    variations: ["get_smaller"],
                 }, rocket_particles_per_second, dt)
             } 
             // friction
