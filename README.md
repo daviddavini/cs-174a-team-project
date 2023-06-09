@@ -70,4 +70,4 @@ Please allow a couple seconds for the simulation to finish loading -- the images
 
 - [NASA's Approximate Planetary Position Calculations](https://ssd.jpl.nasa.gov/planets/approx_pos.html)
 - CS174A Assignment 3
-- [Computing planetary positions] https://www.stjarnhimlen.se/comp/tutorial.html
+- [Computing planetary positions](https://www.stjarnhimlen.se/comp/tutorial.html)
