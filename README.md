@@ -68,5 +68,5 @@ Please allow a couple seconds for the simulation to finish loading -- the images
 
 ## Code Sources
 
-- [NASA's Approximate Planetary Position Calculations] https://ssd.jpl.nasa.gov/planets/approx_pos.html
+- [NASA's Approximate Planetary Position Calculations](https://ssd.jpl.nasa.gov/planets/approx_pos.html)
 - [CS174A Assignment 3] 
