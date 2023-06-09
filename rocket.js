@@ -119,6 +119,19 @@ export class Rocket extends Scene {
     }
 
     create_slider(min, max, initial, scale_name, recipient = this, parent = this.control_panel) {
+        var cssId = 'slider.css';
+        if (!document.getElementById(cssId))
+        {
+            var head  = document.getElementsByTagName('head')[0];
+            var link  = document.createElement('link');
+            link.id   = cssId;
+            link.rel  = 'stylesheet';
+            link.type = 'text/css';
+            link.href = 'slider.css';
+            link.media = 'all';
+            head.appendChild(link);
+        }
+
         const scale_slide = parent.appendChild(document.createElement("INPUT"));
         scale_slide.setAttribute("id", scale_name);
         scale_slide.setAttribute("type", "range");
@@ -126,6 +139,15 @@ export class Rocket extends Scene {
         scale_slide.setAttribute("max", max);
         scale_slide.setAttribute("class", "slider");
         scale_slide.setAttribute("value", initial);
+
+        document.querySelector(':root').style.setProperty('--img-path', "url('our-assets/" + scale_name + ".png')");
+        // scale_slide.setAttribute("style", "--img-path:url('our-assets/time.png')")
+
+        // scale_slide.style.setProperty("cursor", "pointer");
+        // scale_slide.style.backgroundImage = "url('our-assets/" + scale_name + ".png')";
+        // scale_slide.style.setProperty("background-image", "url('our-assets/" + scale_name + ".png')");
+        // scale_slide.style.setProperty("background-size", "contain");
+        // scale_slide.style.setProperty("background-repeat", "no-repeat");
 
         const slid = () => {
             this.change_value(scale_name, scale_slide.value);
@@ -137,7 +159,7 @@ export class Rocket extends Scene {
         if(scale_name === "rotation"){
             this.rot_scale = new_value;
         }
-        else if (scale_name === "planetSize"){
+        else if (scale_name === "size"){
             this.planet_scale = new_value;
         }
         else if (scale_name === "time"){
@@ -173,9 +195,12 @@ export class Rocket extends Scene {
         this.key_triggered_button("Move Right", ["l"], () => {this.moving_right = true}, '#6E6460', () => {this.moving_right = false});
         this.key_triggered_button("Thrust", ["m"], () => {this.thrust = true}, '#6E6460', () => {this.thrust = false});
         this.new_line();
-        this.create_slider(1, 3000000, this.planet_scale, "planetSize");
+        this.new_line();
+        this.create_slider(1, 3000000, this.planet_scale, "size");
+        this.new_line();
         this.new_line();
         this.create_slider(1, 666, this.rot_scale, "rotation");
+        this.new_line();
         this.new_line();
         this.create_slider(1,1000, this.time_scale * 1000, "time");
     }
