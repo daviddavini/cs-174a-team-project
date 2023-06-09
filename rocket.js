@@ -88,12 +88,12 @@ export class Rocket extends Scene {
                 {ambient: .5, diffusivity: 1, specularity: 1, shininess: 1000, color: hex_color("#9FA1A3")
             }),
             rocket_particle: new Material(new defs.Phong_Shader(),
-                {ambient:1, color: hex_color("#573F16", 0.5)
+                {ambient:1, color: hex_color("#00FFFF", 0.5)
             }),
             sun_particle: new Material(new defs.Phong_Shader(),
                 {ambient:1, diffusivity: 0, specularity: 0, color: hex_color("#FF0000", 0.2)}),
             path_particle: new Material(new defs.Phong_Shader(),
-                {ambient:1, diffusivity: 0, specularity: 0, color: hex_color("#FFFFFF", 0.5)}),
+                {ambient:1, diffusivity: 0, specularity: 0, color: hex_color("#FFFF00", 0.2)}),
         }
 
         this.moving_up = false;
@@ -232,23 +232,7 @@ export class Rocket extends Scene {
         this.date = current_date.toISOString().slice(0, 10);
     }
 
-    update_particles(context, program_state, dt) {
-        // create sun particles
-        const sun_particles_per_sec = 100;
-        let point = random_point_on_sphere(0,0,0,this.sun_radius*0.95);
-        let sun_surface_transform = Mat4.translation(point[0], point[1], point[2]);
-        this.create_particles({
-            shape: this.shapes.sun_particle,
-            material: this.materials.sun_particle, 
-            source_matrix: sun_surface_transform, 
-            random_walk_speed: 0, 
-            linear_speed: 0.003, 
-            scale: 0.01, 
-            time_limit: 3000,
-            variations: ["get_smaller"],
-        }, sun_particles_per_sec, dt);
-
-        
+    update_particles(context, program_state) {        
         // update all particles
         for (let particle of this.particles) {
             let time = Date.now();
@@ -359,6 +343,20 @@ export class Rocket extends Scene {
 
         this.sun = Mat4.scale(this.sun_radius, this.sun_radius, this.sun_radius);
         this.shapes.sun.draw(context, program_state, this.sun, this.materials.sun);
+        // create sun particles
+        const sun_particles_per_sec = 300;
+        let point = random_point_on_sphere(0,0,0,this.sun_radius*0.95);
+        let sun_surface_transform = Mat4.translation(point[0], point[1], point[2]);
+        this.create_particles({
+            shape: this.shapes.sun_particle,
+            material: this.materials.sun_particle, 
+            source_matrix: sun_surface_transform, 
+            random_walk_speed: 0.001,
+            linear_speed: 0.001, 
+            scale: 0.01, 
+            time_limit: 3000,
+            variations: ["get_smaller"],
+        }, sun_particles_per_sec, dt);
 
         const planets = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'];
         const axis_angles = { 'mercury': 2, 'venus': 3, 'earth': 23.5, 'mars': 25, 'jupiter': 3, 'saturn': 27, 'uranus': 98, 'neptune': 28 };
@@ -391,7 +389,7 @@ export class Rocket extends Scene {
                     linear_speed: 0,
                     scale: 0.01,
                     time_limit: particle_time_limit,
-                    variations: ["get_lighter"],
+                    variations: ["get_lighter", "get_smaller"],
                 });
             }
         }
@@ -434,7 +432,7 @@ export class Rocket extends Scene {
             if (this.thrust) {
                 this.velocity += 0.0001;
                 const particle_source_matrix = this.rocket_matrix.times(Mat4.translation(0,-this.rocket_scale*0.9,0));
-                const rocket_particles_per_second = 30;
+                const rocket_particles_per_second = 100;
                 this.create_particles({
                     shape: this.shapes.rocket_particle,
                     material: this.materials.rocket_particle, 
@@ -442,8 +440,8 @@ export class Rocket extends Scene {
                     random_walk_speed: particle_scale*1.2, 
                     linear_speed: 0, 
                     scale: particle_scale, 
-                    time_limit: 1000,
-                    variations: ["get_smaller"],
+                    time_limit: 500,
+                    variations: ["get_smaller", "get_lighter"],
                 }, rocket_particles_per_second, dt)
             } 
             // friction
