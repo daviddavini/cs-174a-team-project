@@ -24,11 +24,12 @@ export class Rocket extends Scene {
             uranus: new defs.Subdivision_Sphere(planet_subdivs),
             neptune: new defs.Subdivision_Sphere(planet_subdivs),
             pluto: new defs.Subdivision_Sphere(planet_subdivs),
-            uranusring: new defs.Torus(30,30),
-            saturnring: new defs.Torus(30,30),
+            uranus_ring: new defs.Torus(30,30),
+            saturn_ring: new defs.Torus(30,30),
             background: new defs.Subdivision_Sphere(6),
-            rocket: new Shape_From_File("our-assets/rocketship2.obj"),
-            particle: new defs.Subdivision_Sphere(2),
+            rocket: new Shape_From_File("our-assets/rocketship2 v6.obj"),
+            rocket_particle: new defs.Subdivision_Sphere(2),
+            sun_particle: new defs.Subdivision_Sphere(4),
         };
 
         // Shader options common to all planets
@@ -43,7 +44,7 @@ export class Rocket extends Scene {
         // *** Materials
         this.materials = {
             sun: new Material(new defs.Fake_Bump_Map(1), {
-               ...planet_options, texture: new Texture("our-assets/sun_resized.jpeg")
+                ambient: 1, diffusivity: 0, specularity: 0, texture: new Texture("our-assets/sun_resized.jpeg")
             }),
             mercury: new Material(new defs.Fake_Bump_Map(1), {
                 ...planet_options, texture: new Texture("our-assets/mercury.jpeg")
@@ -73,9 +74,9 @@ export class Rocket extends Scene {
                 ...planet_options, texture: new Texture("our-assets/pluto.png")
             }),
 
-            uranusring: new Material(new Ring_Shader(),
+            uranus_ring: new Material(new Ring_Shader(),
                 {...planet_options, color: hex_color('#ADD8E6')}),
-            saturnring: new Material(new Ring_Shader(),
+            saturn_ring: new Material(new Ring_Shader(),
                 {...planet_options}),
 
             background: new Material(new defs.Fake_Bump_Map(1), {
@@ -84,9 +85,11 @@ export class Rocket extends Scene {
             rocket: new Material(new defs.Phong_Shader(),
                 {ambient: .5, diffusivity: 1, specularity: 1, shininess: 1000, color: hex_color("#9FA1A3")
             }),
-            particle: new Material(new defs.Phong_Shader(),
+            rocket_particle: new Material(new defs.Phong_Shader(),
                 {ambient:1, color: hex_color("#992200", 0.5)
-            })
+            }),
+            sun_particle: new Material(new defs.Phong_Shader(),
+                {ambient:1, diffusivity: 0, specularity: 0, color: hex_color("#FF0000", 0.2)}),
         }
 
         this.moving_up = false;
@@ -149,6 +152,8 @@ export class Rocket extends Scene {
         this.key_triggered_button("Move Up", ["i"], () => {this.moving_up = true}, '#6E6460', () => {this.moving_up = false});
         this.key_triggered_button("Move Down", ["k"], () => {this.moving_down = true}, '#6E6460', () => {this.moving_down = false});
         this.key_triggered_button("Move Right", ["l"], () => {this.moving_right = true}, '#6E6460', () => {this.moving_right = false});
+        this.key_triggered_button("Rotate Left", ["u"], () => {this.rotating_left = true}, '#6E6460', () => {this.rotating_left = false});
+        this.key_triggered_button("Rotate Right", ["o"], () => {this.rotating_right = true}, '#6E6460', () => {this.rotating_right = false});
         this.key_triggered_button("Thrust", ["m"], () => {this.thrust = true}, '#6E6460', () => {this.thrust = false});
         // this.key_triggered_button("View solar system", ["Control", "0"], () => this.attached = () => null);
         // this.new_line();
@@ -170,34 +175,63 @@ export class Rocket extends Scene {
     }
 
     update_particles(context, program_state) {
-        const particle_time_limit = 300;
+        // create sun particles
+        const sun_particles_per_second = 300
+        // randomly decide how many particles to create, using dt to make it framerate independent
+        const create_particles = Math.random() < sun_particles_per_second * program_state.animation_delta_time / 1000;
+        if (create_particles) {
+            let point = random_point_on_sphere(0,0,0,this.sun_radius*0.9);
+            let sun_surface_transform = Mat4.translation(point[0], point[1], point[2]);
+            this.create_particle({
+                shape: this.shapes.sun_particle,
+                material: this.materials.sun_particle, 
+                source_matrix: sun_surface_transform, 
+                random_walk_speed: 0, 
+                linear_speed: 0.01, 
+                scale: 0.01, 
+                time_limit: 3000
+            });
+        }
+        
+        // update all particles
         for (let particle of this.thrust_particles) {
             let time = Date.now();
-            if (time - particle.time > particle_time_limit) {
+            if (time - particle.time > particle.time_limit) {
                 this.thrust_particles.expired = true;
             } else {
-                const scale = this.particle_scale * particle.scale * (1 - (time - particle.time) / particle_time_limit);
+                const scale = particle.scale * (1 - (time - particle.time) / particle.time_limit);
                 let particle_transform = particle.matrix.times(Mat4.scale(scale, scale, scale));
-                this.shapes.particle.draw(context, program_state, particle_transform, this.materials.particle);
+                particle.shape.draw(context, program_state, particle_transform, particle.material);
                 // add random translation
-                const random_x = (Math.random()*2-1) * this.particle_scale;
-                const random_y = (Math.random()*2-1) * this.particle_scale;
-                const random_z = (Math.random()*2-1) * this.particle_scale;
-                particle.matrix = particle.matrix.times(Mat4.translation(random_x,random_y,random_z));
+                const random_x = particle.random_walk_speed * (Math.random()*2-1);
+                const random_y = particle.random_walk_speed * (Math.random()*2-1);
+                const random_z = particle.random_walk_speed * (Math.random()*2-1);
+                const dx = random_x + particle.vel[0];
+                const dy = random_y + particle.vel[1];
+                const dz = random_z + particle.vel[2];
+                particle.matrix = particle.matrix.times(Mat4.translation(dx, dy, dz));
             }
         }
         this.thrust_particles = this.thrust_particles.filter(particle => !particle.expired);
     }
 
-    create_particle() {
-        const random_x = (Math.random()*2-1) * this.particle_scale;
-        const random_y = (Math.random()*2-1) * this.particle_scale;
-        const random_z = (Math.random()*2-1) * this.particle_scale;
-        const random_scale = 1 + (Math.random()*2-1) * 0.15;
+    create_particle(params) {
+        const random_x = params.random_walk_speed * (Math.random()*2-1);
+        const random_y = params.random_walk_speed * (Math.random()*2-1);
+        const random_z = params.random_walk_speed * (Math.random()*2-1);
+        const random_scale = params.scale * (1 + (Math.random()*2-1) * 0.15);
+        const random_vel_x = (Math.random()*2-1) * params.linear_speed;
+        const random_vel_y = (Math.random()*2-1) * params.linear_speed;
+        const random_vel_z = (Math.random()*2-1) * params.linear_speed;
 
         let particle = {
-            matrix: this.rocket_matrix.times(Mat4.translation(0,-this.rocket_scale,0)).times(Mat4.translation(random_x,random_y,random_z)),
+            shape: params.shape,
+            matrix: params.source_matrix.times(Mat4.translation(random_x,random_y,random_z)),
+            random_walk_speed: params.random_walk_speed,
+            vel: [random_vel_x, random_vel_y, random_vel_z],
             time: Date.now(),
+            time_limit: params.time_limit,
+            material: params.material,
             scale: random_scale,
         }
         this.thrust_particles.push(particle);
@@ -218,14 +252,14 @@ export class Rocket extends Scene {
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
         // The parameters of the Light are: position, color, size
-        this.sun_light = new Light(vec4(0, 0, 0, 1), color(1, 1, 1, 1), 10000)
+        this.sun_light = new Light(vec4(0, 0, 0, 1), color(1, 1, 1, 1), 30000)
         program_state.lights = [this.sun_light];
 
         const kms_to_aus = 6.68459e-9;
         const scale_factor = 3_000_000;
         const sun_scale_factor = 10;
         let sun_radius_kms = 695_700;
-        let sun_radius = sun_radius_kms * kms_to_aus * sun_scale_factor;
+        this.sun_radius = sun_radius_kms * kms_to_aus * sun_scale_factor;
 
         let TGen = this.lastTGen;
         if(!(this.paused)){
@@ -234,8 +268,8 @@ export class Rocket extends Scene {
             this.lastTGen = TGen;
         }
 
-        const sun_transform = Mat4.scale(sun_radius, sun_radius, sun_radius);
-        this.shapes.sun.draw(context, program_state, sun_transform, this.materials.sun);
+        this.sun = Mat4.scale(this.sun_radius, this.sun_radius, this.sun_radius);
+        this.shapes.sun.draw(context, program_state, this.sun, this.materials.sun);
 
         const planets = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'];
         const axis_angles = { 'mercury': 2, 'venus': 3, 'earth': 23.5, 'mars': 25, 'jupiter': 3, 'saturn': 27, 'uranus': 98, 'neptune': 28 };
@@ -254,10 +288,10 @@ export class Rocket extends Scene {
             this.shapes[planet].draw(context, program_state, planet_transform, this.materials[planet]);
         }
 		
-        let uranus_ring_transform = this.uranus.times(Mat4.rotation(Math.PI/2,1,0,0)).times(Mat4.scale(3,3,0.1));
-        this.shapes.uranusring.draw(context, program_state, uranus_ring_transform, this.materials.uranusring);
-        let saturn_ring_transform = this.saturn.times(Mat4.rotation(Math.PI/2,1,0,0)).times(Mat4.scale(3,3,0.1));
-        this.shapes.saturnring.draw(context, program_state, saturn_ring_transform, this.materials.saturnring);
+        this.uranus_ring = this.uranus.times(Mat4.rotation(Math.PI/2,1,0,0)).times(Mat4.scale(3,3,0.1));
+        this.shapes.uranus_ring.draw(context, program_state, this.uranus_ring, this.materials.uranus_ring);
+        this.saturn_ring = this.saturn.times(Mat4.rotation(Math.PI/2,1,0,0)).times(Mat4.scale(3,3,0.1));
+        this.shapes.saturn_ring.draw(context, program_state, this.saturn_ring, this.materials.saturn_ring);
 
         // Draw the starry background 
         const bg_radius = 300
@@ -268,7 +302,7 @@ export class Rocket extends Scene {
         // Add camera and rocket controls.
         this.rocket_scale = 0.01;
         this.particle_scale_factor = 0.1;
-        this.particle_scale = this.rocket_scale * this.particle_scale_factor;
+        const particle_scale = this.rocket_scale * this.particle_scale_factor;
         if(this.attached == undefined){ //reset rocket to rotate around earth if player not controlling
             var rocket_transform = this.earth.times(Mat4.translation(10,5,0).times(Mat4.scale(this.rocket_scale,this.rocket_scale,this.rocket_scale)));
             this.shapes.rocket.draw(context, program_state, rocket_transform, this.materials.rocket);
@@ -282,9 +316,23 @@ export class Rocket extends Scene {
                 this.rocket_matrix = this.rocket_matrix.times(Mat4.rotation(angular_speed,0,0,1));
             } if (this.moving_right) {
                 this.rocket_matrix = this.rocket_matrix.times(Mat4.rotation(-angular_speed,0,0,1));
-            } if (this.thrust) {
+            } if (this.rotating_left) {
+                this.rocket_matrix = this.rocket_matrix.times(Mat4.rotation(-angular_speed,0,1,0));
+            } if (this.rotating_right) {
+                this.rocket_matrix = this.rocket_matrix.times(Mat4.rotation(angular_speed,0,1,0));
+            }
+            if (this.thrust) {
                 this.velocity += 0.0001;
-                this.create_particle();
+                const particle_source_matrix = this.rocket_matrix.times(Mat4.translation(0,-this.rocket_scale,0));
+                this.create_particle({
+                    shape: this.shapes.rocket_particle,
+                    material: this.materials.rocket_particle, 
+                    source_matrix: particle_source_matrix, 
+                    random_walk_speed: particle_scale, 
+                    linear_speed: 0, 
+                    scale: particle_scale, 
+                    time_limit: 1000,
+                })
             } 
             // friction
             this.velocity *= 0.99;
@@ -309,8 +357,8 @@ export class Rocket extends Scene {
             rocket_transform = rocket_transform.times(Mat4.rotation(this.angle,0,1,0));
             this.shapes.rocket.draw(context, program_state, rocket_transform, this.materials.rocket);
 
-            this.update_particles(context, program_state);
         }
+        this.update_particles(context, program_state);
 
         this.rocket_cam = Mat4.inverse(this.rocket_matrix);
         this.rocket_cam = Mat4.rotation(-Math.PI/180 * 70, 1,0,0).times(this.rocket_cam);
@@ -587,3 +635,10 @@ class Ring_Shader extends Shader {
         }`;
     }
 }
+
+ function random_point_on_sphere(R) {
+    const [u, v] = [Math.random(), Math.random()];
+    const theta = 2 * Math.PI * u;
+    const phi = Math.acos(2 * v - 1);
+    return [R * Math.sin(phi) * Math.cos(theta), R * Math.sin(phi) * Math.sin(theta), R * Math.cos(phi)];
+ }
