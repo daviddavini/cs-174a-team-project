@@ -117,6 +117,11 @@ export class Rocket extends Scene {
         this.attached = () => this.initial_camera_location;
         this.unscaled_transforms = {};
         this.last_path_particle = {};
+
+        this.bg_music = new Audio('our-assets/space_mountain.mp3');
+        this.bg_music.loop = true;
+        this.bg_music.play();
+        this.thrust_audio = new Audio('our-assets/thrust.wav');
     }
 
     date_select(recipient = this, parent = this.control_panel) {
@@ -306,6 +311,19 @@ export class Rocket extends Scene {
     }
 
     display(context, program_state) {
+        // handle sound effects
+        if (this.is_attached) {
+            if (this.thrust && this.thrust_audio.paused) {
+                this.thrust_audio.play();
+            }
+            if (!this.thrust && !this.thrust_audio.paused) {
+                this.thrust_audio.pause();
+            }
+        }
+        if (this.bg_music.paused) {
+            this.bg_music.play();
+        }
+
         // display():  Called once per frame of animation.
         // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
         if (!context.scratchpad.controls) {
