@@ -29,7 +29,7 @@ In order to pick a specific date, there is a calendar widget below the simulatio
 
 ## Toggles and Controls
 
-Viewer Shortcuts
+### Viewer Shortcuts
 
 | Movement    | Control |
 | ----------- | ----------- |
@@ -38,15 +38,16 @@ Viewer Shortcuts
 | Roll Left/Right | , . |
 | Overview      | y       |
 
-Moving the rocket
+### Moving the rocket
 
 | Function    | Control |
 | ----------- | ----------- |
 | Enter rocket mode      | t       |
 | Add thrust   | m        |
 | Up/Left/Down/Right | i j k l |
+| Spin Left/Right | u o |
 
-Other
+###Other
 
 | Function    | Control |
 | ----------- | ----------- |
@@ -56,7 +57,7 @@ Other
 | Change rotation speed | second slider |
 | Change passage of time rate | third slider |
 
-Note: Buttons for controls can be found below the simulation window
+*Note: Buttons for controls can be found below the simulation window*
 
 ## How to run it
 
