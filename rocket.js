@@ -161,13 +161,6 @@ export class Rocket extends Scene {
         scale_slide.setAttribute("value", initial);
 
         document.querySelector(':root').style.setProperty('--img-path', "url('our-assets/" + scale_name + ".png')");
-        // scale_slide.setAttribute("style", "--img-path:url('our-assets/time.png')")
-
-        // scale_slide.style.setProperty("cursor", "pointer");
-        // scale_slide.style.backgroundImage = "url('our-assets/" + scale_name + ".png')";
-        // scale_slide.style.setProperty("background-image", "url('our-assets/" + scale_name + ".png')");
-        // scale_slide.style.setProperty("background-size", "contain");
-        // scale_slide.style.setProperty("background-repeat", "no-repeat");
 
         const slid = () => {
             this.change_value(scale_name, scale_slide.value);
