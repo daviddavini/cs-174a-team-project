@@ -9,6 +9,7 @@
 </p>
 
 ## Link to the Project
+The zip file was too large to be submitted directly to Bruinlearn, so we're providing the link here instead.
 - [Team Folder in Shared Drive](https://drive.google.com/drive/u/1/folders/15TbXp4fH2v0JkUtMm_knT4f-rSiGtBjH)
 
 ## Table of contents
