@@ -3,6 +3,8 @@
 
   <p align="center">
     An interactive simulation of the solar system's eight planets
+    <br />
+    <em>Created by: Ellie Krugler, David Davini, and Sharjeel Rahman</em>
   </p>
 </p>
 
